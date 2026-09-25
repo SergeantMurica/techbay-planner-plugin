@@ -14,18 +14,26 @@
           <p class="eyebrow">TECHBAY / WORK MATE</p>
           <h1>Order assistant</h1>
         </div>
+        <label class="field initials-control">
+          <span>Initials</span>
+          <input
+            name="checkInInitials"
+            form="order-form"
+            autocomplete="off"
+            maxlength="4"
+            aria-label="Technician initials"
+          />
+        </label>
         <label class="theme-control">
           <span class="sr-only">Color theme</span>
           <select id="theme-select" aria-label="Color theme">
-            <option value="meta-red">META Red</option>
-            <option value="volt">Volt</option>
-            <option value="midnight">Midnight</option>
-            <option value="hot-pink">Hot Pink</option>
-            <option value="ember">Ember</option>
-            <option value="emerald">Emerald</option>
-            <option value="violet">Violet</option>
-            <option value="arctic">Arctic</option>
-            <option value="daylight">Daylight</option>
+            <option value="meta">Meta</option>
+            <option value="nightreaper">Nightreaper</option>
+            <option value="hyperbeast">Hyperbeast</option>
+            <option value="phoenix">Phoenix</option>
+            <option value="gray">Gray</option>
+            <option value="black">Black</option>
+            <option value="white">White</option>
           </select>
         </label>
         <span
@@ -130,20 +138,10 @@
                 <input name="pin" autocomplete="off" />
               </label>
             </div>
-            <div class="field-row">
-              <label class="field">
-                <span>Check-in date</span>
-                <input name="workDate" autocomplete="off" />
-              </label>
-              <label class="field">
-                <span>Check-in initials</span>
-                <input
-                  name="checkInInitials"
-                  autocomplete="off"
-                  maxlength="4"
-                />
-              </label>
-            </div>
+            <label class="field">
+              <span>Check-in date</span>
+              <input name="workDate" autocomplete="off" />
+            </label>
             <label class="field">
               <span>ESD date</span>
               <input name="esd" autocomplete="off" />
@@ -187,18 +185,6 @@
                 placeholder="Customer complaint or requested service"
               ></textarea>
             </label>
-            <label class="field">
-              <span>Tech Notes</span>
-              <textarea name="techNotes" rows="3"></textarea>
-            </label>
-            <label class="field">
-              <span>Solutions</span>
-              <textarea name="solutions" rows="2"></textarea>
-            </label>
-            <label class="field">
-              <span>Callback Notes</span>
-              <textarea name="callbackNotes" rows="2"></textarea>
-            </label>
             <div class="note-preview">
               <div class="preview-heading">
                 <strong>Check-in note</strong
@@ -225,10 +211,6 @@
               />
             </label>
             <label class="field">
-              <span>Attach image</span>
-              <input name="imageFile" type="file" accept="image/*" />
-            </label>
-            <label class="field">
               <span>Daily update</span>
               <textarea
                 name="dailyUpdate"
@@ -236,50 +218,6 @@
                 placeholder="Customer-facing work-order update"
               ></textarea>
             </label>
-          </section>
-
-          <section
-            class="section-block labor-block"
-            aria-labelledby="labor-heading"
-          >
-            <div class="section-heading">
-              <h2 id="labor-heading">Labor</h2>
-              <span>SHOPIFY PRODUCT</span>
-            </div>
-            <label class="field">
-              <span>Labor SKU</span>
-              <select name="laborSku" id="labor-sku">
-                <option value="">Do not add labor</option>
-                <option value="LABOR/BUILD">LABOR/BUILD · $199.00</option>
-                <option value="LABOR/BUILD/ADVANCED">
-                  LABOR/BUILD/ADVANCED · $299.00
-                </option>
-                <option value="LABOR/BUILD/GUIDED">
-                  LABOR/BUILD/GUIDED · $149.99
-                </option>
-                <option value="LABOR/HOUR">LABOR/HOUR · $99.99</option>
-                <option value="LABOR/HOUR/VETERAN">
-                  LABOR/HOUR/VETERAN · $79.99
-                </option>
-                <option value="LABOR/QFR QUICK FIX (15-30MIN)">
-                  LABOR/QFR QUICK FIX (15-30MIN) · $49.99
-                </option>
-                <option value="LABOR/QF QUICK FIX GOOGLE REVIEW">
-                  LABOR/QF QUICK FIX GOOGLE REVIEW · $0.00
-                </option>
-              </select>
-            </label>
-            <label class="toggle-row">
-              <input type="checkbox" name="laptopMultiplier" />
-              <span class="toggle-indicator" aria-hidden="true"></span>
-              <span class="toggle-copy">
-                <strong>Laptop repair above Windows level</strong>
-                <small>Apply 2× labor quantity</small>
-              </span>
-            </label>
-            <p class="price-line" id="price-line">
-              Select a labor SKU to see the total.
-            </p>
           </section>
         </div>
 
@@ -320,8 +258,7 @@
             <div id="plan-responses" class="plan-responses"></div>
             <div class="note-preview">
               <div class="preview-heading">
-                <strong>Tech Notes</strong
-                ><span>Appended to existing notes</span>
+                <strong>Tech Notes</strong><span>Copied for manual paste</span>
               </div>
               <pre id="service-preview"></pre>
             </div>
@@ -389,7 +326,7 @@
             /></label>
             <div class="note-preview">
               <div class="preview-heading">
-                <strong>QC note</strong><span>Appended to existing notes</span>
+                <strong>QC note</strong><span>Copied for manual paste</span>
               </div>
               <pre id="qc-preview"></pre>
             </div>
@@ -397,7 +334,7 @@
         </div>
 
         <button class="apply-button" type="submit">
-          <span>Append notes and fill order</span>
+          <span id="submit-label">Fill Check-in and append note</span>
           <span aria-hidden="true">↗</span>
         </button>
       </form>

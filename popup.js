@@ -2,110 +2,21 @@ import {
   optionalToolsByDevice,
   plannerOptionsByDevice,
 } from "./lib/templates.js";
+import { DEFAULT_THEME, THEMES } from "./lib/themes.js";
 
 const DRAFT_KEY = "techbay-work-order-draft-v1";
 const THEME_KEY = "techbay-tool-theme";
-const THEMES = {
-  "meta-red": {
-    bg: "#0b0b0c",
-    panel: "#1e1e21",
-    line: "#2b2b30",
-    text: "#fff",
-    muted: "#9a9a9a",
-    accent: "#e02020",
-    onAccent: "#fff",
-  },
-  volt: {
-    bg: "#0a0b08",
-    panel: "#1c1f16",
-    line: "#2a2e22",
-    text: "#f2f5ea",
-    muted: "#949c86",
-    accent: "#c8ff00",
-    onAccent: "#10160a",
-  },
-  midnight: {
-    bg: "#0f1216",
-    panel: "#1c212a",
-    line: "#262c37",
-    text: "#e6e9ef",
-    muted: "#8b93a3",
-    accent: "#5b9dff",
-    onAccent: "#08101f",
-  },
-  "hot-pink": {
-    bg: "#12080e",
-    panel: "#26141e",
-    line: "#351d2a",
-    text: "#fdeaf3",
-    muted: "#b08a9d",
-    accent: "#ff4d9d",
-    onAccent: "#2b0616",
-  },
-  ember: {
-    bg: "#120d07",
-    panel: "#241b11",
-    line: "#33261a",
-    text: "#fdf0e2",
-    muted: "#b09a80",
-    accent: "#ff8c1a",
-    onAccent: "#241100",
-  },
-  emerald: {
-    bg: "#06110c",
-    panel: "#13241a",
-    line: "#1d3327",
-    text: "#e6f6ec",
-    muted: "#86a795",
-    accent: "#2fd18a",
-    onAccent: "#04180e",
-  },
-  violet: {
-    bg: "#0e0a16",
-    panel: "#1f172c",
-    line: "#2c2140",
-    text: "#ece6f8",
-    muted: "#9b8db5",
-    accent: "#a06bff",
-    onAccent: "#150726",
-  },
-  arctic: {
-    bg: "#071216",
-    panel: "#12262e",
-    line: "#1c3640",
-    text: "#e2f4f9",
-    muted: "#85a5b0",
-    accent: "#34c6e0",
-    onAccent: "#04181e",
-  },
-  daylight: {
-    bg: "#f4f5f7",
-    panel: "#fff",
-    line: "#dcdfe5",
-    text: "#14161a",
-    muted: "#646b78",
-    accent: "#d11414",
-    onAccent: "#fff",
-  },
-};
-const prices = {
-  "LABOR/BUILD": 199,
-  "LABOR/BUILD/ADVANCED": 299,
-  "LABOR/BUILD/GUIDED": 149.99,
-  "LABOR/HOUR": 99.99,
-  "LABOR/HOUR/VETERAN": 79.99,
-  "LABOR/QFR QUICK FIX (15-30MIN)": 49.99,
-  "LABOR/QF QUICK FIX GOOGLE REVIEW": 0,
-};
-
+const INITIALS_KEY = "techbay-technician-initials";
 const form = document.querySelector("#order-form");
 const status = document.querySelector("#status");
 const orderNumber = document.querySelector("#order-number");
 const connection = document.querySelector("#connection");
-const laborSku = document.querySelector("#labor-sku");
-const laptopMultiplier = form.elements.laptopMultiplier;
-const priceLine = document.querySelector("#price-line");
+const submitLabel = document.querySelector("#submit-label");
+const initialsInput = document.querySelector('[name="checkInInitials"]');
 const themeSelect = document.querySelector("#theme-select");
+themeSelect.replaceChildren(
+  ...THEMES.map((theme) => new Option(theme.name, theme.id)),
+);
 const serviceOption = document.querySelector("#service-option");
 const optionalTool = document.querySelector("#optional-tool");
 const selectedOptionsNode = document.querySelector("#selected-options");
@@ -140,6 +51,25 @@ const qcItems = [
   ["occt", "Ran OCCT and verified results make sense"],
   ["psuOff", "Verified PSU switch is off"],
 ];
+const checkInFieldNames = new Set([
+  "device",
+  "priority",
+  "makeModel",
+  "serial",
+  "pin",
+  "checkInInitials",
+  "workDate",
+  "esd",
+  "reimage",
+  "backup",
+  "issues",
+  "techNotes",
+  "solutions",
+  "callbackNotes",
+  "s2s",
+  "image",
+  "dailyUpdate",
+]);
 let activeTabId;
 let activeOrderNumber = "";
 
@@ -153,6 +83,15 @@ function showStatus(message, kind = "") {
   status.className = `status ${kind}`.trim();
 }
 
+function updateSubmitLabel(tabName) {
+  submitLabel.textContent =
+    tabName === "service"
+      ? "Copy Service Note"
+      : tabName === "qc"
+        ? "Copy QC Note"
+        : "Fill Check-in and append note";
+}
+
 function getOrderNumber(url = "") {
   const match = url.match(/work-orders\/([^/?#]+)/i);
   if (!match) return "";
@@ -164,24 +103,14 @@ function getOrderNumber(url = "") {
   }
 }
 
-function updatePrice() {
-  const sku = laborSku.value;
-  if (!sku) {
-    priceLine.textContent = "Select a labor SKU to see the total.";
-    return;
-  }
-
-  const quantity = laptopMultiplier.checked ? 2 : 1;
-  const total = prices[sku] * quantity;
-  priceLine.textContent = `${quantity}× ${sku} · $${total.toFixed(2)} total`;
-}
-
 function applyTheme(themeId) {
-  const theme = THEMES[themeId] ? themeId : "meta-red";
-  const palette = THEMES[theme];
+  const palette =
+    THEMES.find((item) => item.id === themeId) ||
+    THEMES.find((item) => item.id === DEFAULT_THEME);
+  const theme = palette.id;
   document.documentElement.dataset.theme = theme;
   for (const [token, value] of Object.entries(palette)) {
-    if (token === "onAccent") continue;
+    if (["id", "name", "onAccent"].includes(token)) continue;
     document.documentElement.style.setProperty(
       token === "text" ? "--ink" : token === "accent" ? "--acid" : `--${token}`,
       value,
@@ -305,29 +234,32 @@ function mark(value, expected) {
 
 function noteHeader() {
   const date = form.elements.workDate.value.trim() || "__/__";
-  const initials = form.elements.checkInInitials.value.trim() || "__";
+  const initials = initialsInput.value.trim() || "__";
   return `${date} - ${initials}`;
+}
+
+function formatDailyUpdate(text) {
+  const update = text.trim();
+  if (!update) return "";
+  const initials = initialsInput.value.trim() || "__";
+  return `${todayLabel()} ${initials} - ${update}`;
 }
 
 function getCheckInNote() {
   return [
-    noteHeader(),
-    `PIN: [${form.elements.pin.value}]`,
-    `ESD: [${form.elements.esd.value}]`,
+    `PIN: ${form.elements.pin.value}`,
+    `ESD: ${form.elements.esd.value}`,
     `Reimage/Wipe: Yes[${mark(checkedValue("reimage"), "yes")}] No[${mark(checkedValue("reimage"), "no")}] Call Me First[${mark(checkedValue("reimage"), "call")}]`,
     `Back-up: Yes[${mark(checkedValue("backup"), "yes")}] No[${mark(checkedValue("backup"), "no")}]`,
-    `Initials: [${form.elements.checkInInitials.value}]`,
+    `Initials: ${initialsInput.value}`,
     "",
     `Issue(s): ${form.elements.issues.value}`,
     "",
     "Tech Notes:",
-    form.elements.techNotes.value,
     "",
     "Solutions:",
-    form.elements.solutions.value,
     "",
     "Callback Notes:",
-    form.elements.callbackNotes.value,
   ].join("\n");
 }
 
@@ -372,7 +304,6 @@ function getQcNote() {
   const failure = form.elements.occtFailure.value.trim();
   return [
     "QC Checklist",
-    noteHeader(),
     "",
     ...checks,
     "",
@@ -388,7 +319,7 @@ function getQcNote() {
     `Max CPU frequency: ${form.elements.maxCpuFrequency.value || "________"}`,
     `Max GPU temp: ${form.elements.maxGpuTemp.value || "________"}`,
     "",
-    `Verified by: ${form.elements.checkInInitials.value || "________"}    Date completed: ${form.elements.workDate.value || "________"}`,
+    `Verified by: ${initialsInput.value || "________"}    Date completed: ${form.elements.workDate.value || "________"}`,
   ].join("\n");
 }
 
@@ -418,30 +349,12 @@ function renderQcChecklist() {
 }
 
 function saveDraft() {
-  const values = Object.fromEntries(
-    [...new FormData(form).entries()].filter(([name]) => name !== "imageFile"),
-  );
-  values.laptopMultiplier = laptopMultiplier.checked;
   values.selectedOptions = [...selectedOptions];
   values.selectedTools = [...selectedTools];
   values.planResponses = { ...planResponses };
-  chrome.storage.local.set({ [DRAFT_KEY]: values });
-}
-
-function readImageFile(file) {
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.addEventListener("load", () =>
-      resolve({
-        name: file.name,
-        type: file.type,
-        dataUrl: reader.result,
-      }),
-    );
-    reader.addEventListener("error", () =>
-      reject(new Error("Could not read the selected image.")),
-    );
-    reader.readAsDataURL(file);
+  chrome.storage.local.set({
+    [DRAFT_KEY]: values,
+    [INITIALS_KEY]: initialsInput.value,
   });
 }
 
@@ -496,7 +409,7 @@ async function initialize() {
     );
   }
 
-  const stored = await chrome.storage.local.get(DRAFT_KEY);
+  const stored = await chrome.storage.local.get([DRAFT_KEY, INITIALS_KEY]);
   renderQcChecklist();
   const values = stored[DRAFT_KEY];
   if (values) {
@@ -515,14 +428,15 @@ async function initialize() {
     for (const id of values.selectedTools || []) selectedTools.add(id);
     Object.assign(planResponses, values.planResponses || {});
   }
+  if (typeof stored[INITIALS_KEY] === "string")
+    initialsInput.value = stored[INITIALS_KEY];
 
   if (!form.elements.workDate.value)
     form.elements.workDate.value = todayLabel();
   if (!form.elements.esd.value) form.elements.esd.value = todayLabel();
   renderServices();
   const theme = await chrome.storage.local.get(THEME_KEY);
-  applyTheme(theme[THEME_KEY] || "meta-red");
-  updatePrice();
+  applyTheme(theme[THEME_KEY] || DEFAULT_THEME);
 }
 
 form.addEventListener("input", () => {
@@ -531,9 +445,14 @@ form.addEventListener("input", () => {
 });
 form.addEventListener("change", () => {
   saveDraft();
-  updatePrice();
   updatePreviews();
 });
+
+initialsInput.addEventListener("input", () => {
+  saveDraft();
+  updatePreviews();
+});
+initialsInput.addEventListener("change", saveDraft);
 
 document.querySelectorAll(".tab").forEach((tab) => {
   tab.addEventListener("click", () => {
@@ -547,6 +466,7 @@ document.querySelectorAll(".tab").forEach((tab) => {
       panel.hidden = !active;
       panel.classList.toggle("active", active);
     });
+    updateSubmitLabel(tab.dataset.tab);
   });
 });
 
@@ -575,35 +495,33 @@ qcChecklistNode.addEventListener("change", updatePreviews);
 
 form.addEventListener("submit", async (event) => {
   event.preventDefault();
+  const activeTab = document.querySelector(".tab.active")?.dataset.tab;
+  if (activeTab === "service" || activeTab === "qc") {
+    const note = activeTab === "service" ? getServiceNote() : getQcNote();
+    try {
+      await navigator.clipboard.writeText(note);
+      showStatus(
+        `${activeTab === "service" ? "Service" : "QC"} note copied. Paste it into WorkMate Notes.`,
+        "success",
+      );
+    } catch {
+      showStatus("Could not copy the note to the clipboard.", "error");
+    }
+    return;
+  }
+
   if (!activeTabId || !activeOrderNumber) {
     showStatus("Select a Shopify Work Mate work-order tab first.", "error");
     return;
   }
 
-  const values = Object.fromEntries(new FormData(form).entries());
-  values.laptopMultiplier = laptopMultiplier.checked;
-  values.orderNumber = activeOrderNumber;
+  const formValues = Object.fromEntries(new FormData(form).entries());
+  const values = { orderNumber: activeOrderNumber };
+  for (const [name, value] of Object.entries(formValues)) {
+    if (checkInFieldNames.has(name)) values[name] = value;
+  }
+  values.dailyUpdate = formatDailyUpdate(formValues.dailyUpdate || "");
   values.checkInNote = getCheckInNote();
-  values.serviceNote = getServiceNote();
-  values.qcNote = getQcNote();
-  values.selectedOptions = [...selectedOptions];
-  values.selectedTools = [...selectedTools];
-  delete values.imageFile;
-  if (!selectedOptions.size && !selectedTools.size) delete values.serviceNote;
-  const hasQcData =
-    qcItems.some(
-      ([key]) => form.querySelector(`[name="qc-${key}"]`)?.checked,
-    ) ||
-    Boolean(
-      values.occtTest ||
-      values.occtResult ||
-      values.biosVersion ||
-      values.maxCpuTemp ||
-      values.maxCpuPower ||
-      values.maxCpuFrequency ||
-      values.maxGpuTemp,
-    );
-  if (!hasQcData) delete values.qcNote;
 
   try {
     const hasWorkMateAccess = await chrome.permissions.request({
@@ -617,15 +535,6 @@ form.addEventListener("submit", async (event) => {
       return;
     }
 
-    const imageFile = form.elements.imageFile.files[0];
-    if (imageFile) {
-      if (imageFile.size > 8 * 1024 * 1024) {
-        showStatus("Choose an image smaller than 8 MB.", "error");
-        return;
-      }
-      values.imageFile = await readImageFile(imageFile);
-    }
-
     const response = await sendFillMessage(activeTabId, values);
     if (!response?.ok)
       throw new Error(response?.error || "The Shopify page did not respond.");
@@ -633,7 +542,6 @@ form.addEventListener("submit", async (event) => {
     const parts = [
       `Filled ${response.filled} field${response.filled === 1 ? "" : "s"}.`,
     ];
-    if (response.product) parts.push(response.product);
     if (response.missing?.length)
       parts.push(`Not found: ${response.missing.join(", ")}.`);
     if (response.filled === 0 && response.context) {

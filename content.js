@@ -3,59 +3,26 @@
   globalThis.__techbayWorkOrderListenerInstalled = true;
 
   const FIELD_LABELS = {
-    device: ["device", "device type", "computer type"],
-    makeModel: ["make/model", "make / model", "make model"],
-    serial: ["serial", "serial number"],
+    device: ["device"],
+    makeModel: ["make/model"],
+    serial: ["serial"],
     pin: ["pin"],
-    checkInInitials: ["initials", "technician initials"],
-    esd: ["esd", "esd date"],
-    reimage: ["reimage/wipe", "reimage / wipe", "reimage"],
-    backup: ["back-up", "backup", "back up"],
     image: ["image"],
     s2s: ["s2s"],
     priority: ["priority"],
     dailyUpdate: ["daily update"],
-    issues: ["issue(s)", "issues", "issue"],
-    techNotes: ["tech notes", "technician notes"],
-    solutions: ["solutions", "solution"],
-    callbackNotes: ["callback notes", "callback"],
-    checkInNote: [
-      "work order notes",
-      "order notes",
-      "check-in notes",
-      "check in notes",
-      "check-in",
-      "check in",
-      "notes",
-      "note",
-    ],
-    serviceNote: ["tech notes", "technician notes"],
-    qcNote: ["qc checklist", "completion notes", "qc notes"],
+    checkInNote: ["note"],
   };
 
-  const APPEND_FIELDS = new Set([
-    "dailyUpdate",
-    "issues",
-    "techNotes",
-    "solutions",
-    "callbackNotes",
-    "checkInNote",
-    "serviceNote",
-    "qcNote",
-  ]);
-
-  const LABOR_PRICES = {
-    "LABOR/BUILD": 199,
-    "LABOR/BUILD/ADVANCED": 299,
-    "LABOR/BUILD/GUIDED": 149.99,
-    "LABOR/HOUR": 99.99,
-    "LABOR/HOUR/VETERAN": 79.99,
-    "LABOR/QFR QUICK FIX (15-30MIN)": 49.99,
-    "LABOR/QF QUICK FIX GOOGLE REVIEW": 0,
-  };
+  const APPEND_FIELDS = new Set(["checkInNote"]);
 
   function normalize(value) {
-    return value.toLowerCase().replace(/\s+/g, " ").trim().replace(/:$/, "");
+    return value
+      .toLowerCase()
+      .replace(/\s+/g, " ")
+      .trim()
+      .replace(/:$/, "")
+      .replace(/\s*\*$/, "");
   }
 
   function isVisible(element) {
@@ -87,7 +54,7 @@
       if (control) result.push(control);
     }
     const nested = label.querySelector(
-      "input:not([type=hidden]), textarea, select, [contenteditable=true]",
+      "input:not([type=hidden]), textarea, select, [contenteditable=true], [role=textbox]",
     );
     if (nested) result.push(nested);
     return result;
@@ -113,6 +80,24 @@
       .join(" ");
   }
 
+  function hasExactAccessibleLabel(control, keys) {
+    const labelledBy = (control.getAttribute("aria-labelledby") || "")
+      .split(/\s+/)
+      .map((id) => document.getElementById(id)?.textContent || "");
+    const labels = control.labels
+      ? [...control.labels].map((label) => label.textContent || "")
+      : [];
+    const metadata = [
+      control.getAttribute("aria-label"),
+      control.getAttribute("placeholder"),
+      control.getAttribute("name"),
+      control.getAttribute("data-testid"),
+    ];
+    return [...labelledBy, ...labels, ...metadata]
+      .filter(Boolean)
+      .some((text) => keys.includes(normalize(text)));
+  }
+
   function findByAdjacentLabel(keys) {
     const selectors = "label, [class], [id], [data-testid], span, p";
     const labels = [...document.querySelectorAll(selectors)].filter(
@@ -128,7 +113,7 @@
       for (let depth = 0; depth < 4 && container; depth += 1) {
         const controls = [
           ...container.querySelectorAll(
-            "input:not([type=hidden]):not([type=file]), textarea, select, [contenteditable=true]",
+            "input:not([type=hidden]):not([type=file]), textarea, select, [contenteditable=true], [role=textbox]",
           ),
         ].filter((control) => isVisible(control) && !control.disabled);
         if (controls.length === 1) return controls[0];
@@ -152,32 +137,33 @@
       if (control) return control;
     }
 
-    if (exactOnly) return undefined;
-
-    for (const label of labels) {
-      if (!isVisible(label) || !labelMatches(label.textContent || "", keys))
-        continue;
-      const control = controlsFromLabel(label).find(
-        (item) => item.type !== "file" && isVisible(item),
-      );
-      if (control) return control;
+    if (!exactOnly) {
+      for (const label of labels) {
+        if (!isVisible(label) || !labelMatches(label.textContent || "", keys))
+          continue;
+        const control = controlsFromLabel(label).find(
+          (item) => item.type !== "file" && isVisible(item),
+        );
+        if (control) return control;
+      }
     }
 
     const candidates = [
       ...document.querySelectorAll(
-        "input:not([type=hidden]):not([type=file]), textarea, select, [contenteditable=true]",
+        "input:not([type=hidden]):not([type=file]), textarea, select, [contenteditable=true], [role=textbox]",
       ),
     ];
-    return (
-      candidates.find((control) => {
-        if (!isVisible(control) || control.disabled) return false;
-        return labelMatches(accessibleText(control), keys);
-      }) || findByAdjacentLabel(keys)
-    );
+    const matched = candidates.find((control) => {
+      if (!isVisible(control) || control.disabled) return false;
+      return exactOnly
+        ? hasExactAccessibleLabel(control, keys)
+        : labelMatches(accessibleText(control), keys);
+    });
+    return matched || findByAdjacentLabel(keys);
   }
 
   function dispatchValue(control, value) {
-    if (control.isContentEditable) {
+    if (control.isContentEditable || !("value" in control)) {
       control.textContent = value;
     } else {
       const prototype =
@@ -196,9 +182,10 @@
   }
 
   function appendValue(control, value) {
-    const current = control.isContentEditable
-      ? control.textContent
-      : control.value;
+    const current =
+      control.isContentEditable || !("value" in control)
+        ? control.textContent
+        : control.value;
     if ((current || "").includes(value.trim())) return;
     const combined = current?.trim()
       ? `${current.trimEnd()}\n\n${value}`
@@ -264,45 +251,6 @@
     return false;
   }
 
-  function findImageFileField() {
-    const labels = [...document.querySelectorAll("label")];
-    for (const label of labels) {
-      if (
-        !isVisible(label) ||
-        !labelMatches(label.textContent || "", FIELD_LABELS.image)
-      )
-        continue;
-      const control = controlsFromLabel(label).find(
-        (item) =>
-          item instanceof HTMLInputElement &&
-          item.type === "file" &&
-          !item.disabled,
-      );
-      if (control) return control;
-    }
-    return [...document.querySelectorAll('input[type="file"]')].find(
-      (input) => {
-        const label = input.labels
-          ? [...input.labels].map((item) => item.textContent || "").join(" ")
-          : "";
-        return !input.disabled && labelMatches(label, FIELD_LABELS.image);
-      },
-    );
-  }
-
-  function setImageFile(input, image) {
-    const encoded = image.dataUrl.split(",")[1];
-    const bytes = Uint8Array.from(atob(encoded), (character) =>
-      character.charCodeAt(0),
-    );
-    const file = new File([bytes], image.name, { type: image.type });
-    const transfer = new DataTransfer();
-    transfer.items.add(file);
-    input.files = transfer.files;
-    input.dispatchEvent(new Event("input", { bubbles: true }));
-    input.dispatchEvent(new Event("change", { bubbles: true }));
-  }
-
   function visibleProductOptions() {
     return [
       ...document.querySelectorAll(
@@ -328,48 +276,6 @@
 
   function wait(milliseconds) {
     return new Promise((resolve) => setTimeout(resolve, milliseconds));
-  }
-
-  async function addLaborProduct(sku, quantity) {
-    let search = findProductSearch();
-    if (!search) {
-      const trigger = [...document.querySelectorAll('button, [role="button"]')]
-        .filter(isVisible)
-        .find(
-          (element) =>
-            normalize(element.textContent || "") === "search products",
-        );
-      trigger?.click();
-      if (trigger) {
-        await wait(250);
-        search = findProductSearch();
-      }
-    }
-    if (!search) return "Labor SKU not added: product search field not found.";
-
-    search.focus();
-    await setControlValue(search, sku);
-    await wait(700);
-
-    const exact = visibleProductOptions().find((option) =>
-      normalize(option.textContent || "").includes(normalize(sku)),
-    );
-    if (!exact)
-      return `Labor SKU not added: no matching product result for ${sku}.`;
-
-    exact.click();
-    await wait(500);
-    if (quantity > 1) {
-      const quantityInput = [
-        ...document.querySelectorAll('input[type="number"]'),
-      ]
-        .filter((input) => isVisible(input) && !input.disabled)
-        .at(-1);
-      if (quantityInput) await setControlValue(quantityInput, String(quantity));
-    }
-
-    const total = LABOR_PRICES[sku] * quantity;
-    return `Added ${sku} ×${quantity} ($${total.toFixed(2)}).`;
   }
 
   async function fillWorkOrder(values) {
@@ -403,22 +309,6 @@
       }
     }
 
-    if (values.imageFile) {
-      const imageInput = findImageFileField();
-      if (imageInput) {
-        setImageFile(imageInput, values.imageFile);
-        filled += 1;
-      } else if (!values.image?.trim()) {
-        missing.push("Image upload");
-      }
-    }
-
-    let product = "";
-    if (values.laborSku && LABOR_PRICES[values.laborSku] !== undefined) {
-      const quantity = values.laptopMultiplier ? 2 : 1;
-      product = await addLaborProduct(values.laborSku, quantity);
-    }
-
     const controls = document.querySelectorAll(
       "input:not([type=hidden]), textarea, select, [contenteditable=true]",
     );
@@ -438,7 +328,6 @@
       ok: true,
       filled,
       missing,
-      product,
       context: `${location.hostname}${location.pathname}`,
       frame: window.top === window ? "top frame" : "embedded frame",
       controlCount: controls.length,
