@@ -1,6 +1,6 @@
 # Techbay Work Order Assistant
 
-Chrome Manifest V3 extension for filling the custom fields on a Shopify Admin Work Mate work order. It runs alongside the Techbay Note Planner; the planner's local drafts, note generation, and clipboard actions are unchanged.
+Chrome Manifest V3 extension for managing a Shopify Admin Work Mate work order from the browser toolbar. The popup includes check-in, device-specific service plans, technician responses, QC, and the shared Techbay tool themes.
 
 ## Install for local use
 
@@ -11,9 +11,9 @@ Chrome Manifest V3 extension for filling the custom fields on a Shopify Admin Wo
 
 ## Use
 
-Enter any device details, choose an optional labor SKU, then select **Fill active work order**. On first use, Chrome asks permission to access WorkMate's embedded app at `app.workmatepos.co`; allow it so the extension can reach the order fields inside Shopify's cross-origin frame. The extension fills matching WorkMate fields and, when selected, searches the Shopify product picker for the labor SKU. For laptop repairs above Windows-level work, enable the 2× option; the extension attempts to set the added line quantity to two. Confirm all fields and pricing in Shopify, then use Shopify's own save or submit controls.
+Use the **Check in**, **Choose this service**, and **QC Checklist** tabs to enter order details, select desktop or laptop service plans and tools, record a response for each plan, and track final checks. Select a color theme from the header. **Append notes and fill order** adds the generated check-in, service, and QC blocks to their matching WorkMate note fields and fills matching order fields. Existing note text is preserved, and the same generated block is not appended twice. On first use, Chrome asks permission to access WorkMate's embedded app at `app.workmatepos.co`; allow it so the extension can reach the order fields inside Shopify's cross-origin frame. The optional labor picker remains available on the Check in tab. Confirm all fields and pricing in Shopify, then use Shopify's own save or submit controls.
 
-The extension does not submit, change order status, or replace Shopify behavior. Values in the extension form are saved locally with `chrome.storage.local`.
+The extension does not submit or change order status. Check-in details, plan selections and responses, QC readings, and theme choice are saved locally with `chrome.storage.local`.
 
 ## Notes
 

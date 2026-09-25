@@ -14,6 +14,20 @@
           <p class="eyebrow">TECHBAY / WORK MATE</p>
           <h1>Order assistant</h1>
         </div>
+        <label class="theme-control">
+          <span class="sr-only">Color theme</span>
+          <select id="theme-select" aria-label="Color theme">
+            <option value="meta-red">META Red</option>
+            <option value="volt">Volt</option>
+            <option value="midnight">Midnight</option>
+            <option value="hot-pink">Hot Pink</option>
+            <option value="ember">Ember</option>
+            <option value="emerald">Emerald</option>
+            <option value="violet">Violet</option>
+            <option value="arctic">Arctic</option>
+            <option value="daylight">Daylight</option>
+          </select>
+        </label>
         <span
           class="connection"
           id="connection"
@@ -29,125 +43,361 @@
       </div>
 
       <form id="order-form">
-        <section class="section-block" aria-labelledby="device-heading">
-          <div class="section-heading">
-            <h2 id="device-heading">Device details</h2>
-            <span>WORK ORDER FIELDS</span>
-          </div>
+        <nav class="tabs" role="tablist" aria-label="Work order stages">
+          <button
+            class="tab active"
+            id="tab-checkin"
+            type="button"
+            role="tab"
+            aria-selected="true"
+            aria-controls="panel-checkin"
+            data-tab="checkin"
+          >
+            Check in
+          </button>
+          <button
+            class="tab"
+            id="tab-service"
+            type="button"
+            role="tab"
+            aria-selected="false"
+            aria-controls="panel-service"
+            data-tab="service"
+          >
+            Choose this service
+          </button>
+          <button
+            class="tab"
+            id="tab-qc"
+            type="button"
+            role="tab"
+            aria-selected="false"
+            aria-controls="panel-qc"
+            data-tab="qc"
+          >
+            QC Checklist
+          </button>
+        </nav>
 
-          <label class="field">
-            <span>Device</span>
-            <input
-              name="device"
-              autocomplete="off"
-              placeholder="Desktop / Laptop"
-            />
-          </label>
-          <label class="field">
-            <span>Make / Model</span>
-            <input
-              name="makeModel"
-              autocomplete="off"
-              placeholder="Brand and model"
-            />
-          </label>
-          <div class="field-row">
-            <label class="field">
-              <span>Serial</span>
-              <input name="serial" autocomplete="off" />
-            </label>
-            <label class="field">
-              <span>PIN</span>
-              <input name="pin" autocomplete="off" />
-            </label>
-          </div>
-          <div class="field-row">
-            <label class="field">
-              <span>S2S</span>
-              <select name="s2s">
-                <option value="">Not set</option>
-                <option value="Yes">Yes</option>
-                <option value="No">No</option>
-              </select>
-            </label>
-            <label class="field">
-              <span>Priority</span>
-              <select name="priority">
-                <option value="">Not set</option>
-                <option value="Normal">Normal</option>
-                <option value="High">High</option>
-                <option value="Urgent">Urgent</option>
-              </select>
-            </label>
-          </div>
-          <label class="field">
-            <span>Image URL</span>
-            <input
-              name="image"
-              autocomplete="off"
-              placeholder="Optional image link"
-            />
-          </label>
-          <label class="field">
-            <span>Attach image</span>
-            <input name="imageFile" type="file" accept="image/*" />
-          </label>
-          <label class="field">
-            <span>Daily update</span>
-            <textarea
-              name="dailyUpdate"
-              rows="3"
-              placeholder="Customer-facing work-order update"
-            ></textarea>
-          </label>
-        </section>
-
-        <section
-          class="section-block labor-block"
-          aria-labelledby="labor-heading"
+        <div
+          class="tab-panel active"
+          id="panel-checkin"
+          role="tabpanel"
+          aria-labelledby="tab-checkin"
         >
-          <div class="section-heading">
-            <h2 id="labor-heading">Labor</h2>
-            <span>SHOPIFY PRODUCT</span>
-          </div>
-          <label class="field">
-            <span>Labor SKU</span>
-            <select name="laborSku" id="labor-sku">
-              <option value="">Do not add labor</option>
-              <option value="LABOR/BUILD">LABOR/BUILD · $199.00</option>
-              <option value="LABOR/BUILD/ADVANCED">
-                LABOR/BUILD/ADVANCED · $299.00
-              </option>
-              <option value="LABOR/BUILD/GUIDED">
-                LABOR/BUILD/GUIDED · $149.99
-              </option>
-              <option value="LABOR/HOUR">LABOR/HOUR · $99.99</option>
-              <option value="LABOR/HOUR/VETERAN">
-                LABOR/HOUR/VETERAN · $79.99
-              </option>
-              <option value="LABOR/QFR QUICK FIX (15-30MIN)">
-                LABOR/QFR QUICK FIX (15-30MIN) · $49.99
-              </option>
-              <option value="LABOR/QF QUICK FIX GOOGLE REVIEW">
-                LABOR/QF QUICK FIX GOOGLE REVIEW · $0.00
-              </option>
-            </select>
-          </label>
-          <label class="toggle-row">
-            <input type="checkbox" name="laptopMultiplier" />
-            <span class="toggle-indicator" aria-hidden="true"></span>
-            <span class="toggle-copy">
-              <strong>Laptop repair above Windows level</strong>
-              <small>Apply 2× labor quantity</small>
-            </span>
-          </label>
-          <p class="price-line" id="price-line">
-            Select a labor SKU to see the total.
-          </p>
-        </section>
+          <section class="section-block" aria-labelledby="device-heading">
+            <div class="section-heading">
+              <h2 id="device-heading">Device details</h2>
+              <span>WORK ORDER FIELDS</span>
+            </div>
+
+            <div class="field-row">
+              <label class="field">
+                <span>Device</span>
+                <select name="device">
+                  <option value="">Select type</option>
+                  <option value="Desktop">Desktop</option>
+                  <option value="Laptop">Laptop</option>
+                  <option value="Watercooled">Watercooled</option>
+                  <option value="Other">Other</option>
+                </select>
+              </label>
+              <label class="field">
+                <span>Priority</span>
+                <select name="priority">
+                  <option value="">Not set</option>
+                  <option value="1">1</option>
+                  <option value="2">2</option>
+                  <option value="3">3</option>
+                </select>
+              </label>
+            </div>
+            <label class="field">
+              <span>Make / Model</span>
+              <input
+                name="makeModel"
+                autocomplete="off"
+                placeholder="Brand and model"
+              />
+            </label>
+            <div class="field-row">
+              <label class="field">
+                <span>Serial</span>
+                <input name="serial" autocomplete="off" />
+              </label>
+              <label class="field">
+                <span>PIN</span>
+                <input name="pin" autocomplete="off" />
+              </label>
+            </div>
+            <div class="field-row">
+              <label class="field">
+                <span>Check-in date</span>
+                <input name="workDate" autocomplete="off" />
+              </label>
+              <label class="field">
+                <span>Check-in initials</span>
+                <input
+                  name="checkInInitials"
+                  autocomplete="off"
+                  maxlength="4"
+                />
+              </label>
+            </div>
+            <label class="field">
+              <span>ESD date</span>
+              <input name="esd" autocomplete="off" />
+            </label>
+            <fieldset class="choice-group">
+              <legend>Reimage / Wipe</legend>
+              <label class="choice"
+                ><input type="radio" name="reimage" value="yes" /><span
+                  >Yes</span
+                ></label
+              >
+              <label class="choice"
+                ><input type="radio" name="reimage" value="no" /><span
+                  >No</span
+                ></label
+              >
+              <label class="choice"
+                ><input type="radio" name="reimage" value="call" /><span
+                  >Call Me First</span
+                ></label
+              >
+            </fieldset>
+            <fieldset class="choice-group">
+              <legend>Back-up</legend>
+              <label class="choice"
+                ><input type="radio" name="backup" value="yes" /><span
+                  >Yes</span
+                ></label
+              >
+              <label class="choice"
+                ><input type="radio" name="backup" value="no" /><span
+                  >No</span
+                ></label
+              >
+            </fieldset>
+            <label class="field">
+              <span>Issue(s)</span>
+              <textarea
+                name="issues"
+                rows="3"
+                placeholder="Customer complaint or requested service"
+              ></textarea>
+            </label>
+            <label class="field">
+              <span>Tech Notes</span>
+              <textarea name="techNotes" rows="3"></textarea>
+            </label>
+            <label class="field">
+              <span>Solutions</span>
+              <textarea name="solutions" rows="2"></textarea>
+            </label>
+            <label class="field">
+              <span>Callback Notes</span>
+              <textarea name="callbackNotes" rows="2"></textarea>
+            </label>
+            <div class="note-preview">
+              <div class="preview-heading">
+                <strong>Check-in note</strong
+                ><span>Appended to existing notes</span>
+              </div>
+              <pre id="checkin-preview"></pre>
+            </div>
+            <div class="field-row">
+              <label class="field">
+                <span>S2S</span>
+                <select name="s2s">
+                  <option value="">Not set</option>
+                  <option value="Yes">Yes</option>
+                  <option value="No">No</option>
+                </select>
+              </label>
+            </div>
+            <label class="field">
+              <span>Image URL</span>
+              <input
+                name="image"
+                autocomplete="off"
+                placeholder="Optional image link"
+              />
+            </label>
+            <label class="field">
+              <span>Attach image</span>
+              <input name="imageFile" type="file" accept="image/*" />
+            </label>
+            <label class="field">
+              <span>Daily update</span>
+              <textarea
+                name="dailyUpdate"
+                rows="3"
+                placeholder="Customer-facing work-order update"
+              ></textarea>
+            </label>
+          </section>
+
+          <section
+            class="section-block labor-block"
+            aria-labelledby="labor-heading"
+          >
+            <div class="section-heading">
+              <h2 id="labor-heading">Labor</h2>
+              <span>SHOPIFY PRODUCT</span>
+            </div>
+            <label class="field">
+              <span>Labor SKU</span>
+              <select name="laborSku" id="labor-sku">
+                <option value="">Do not add labor</option>
+                <option value="LABOR/BUILD">LABOR/BUILD · $199.00</option>
+                <option value="LABOR/BUILD/ADVANCED">
+                  LABOR/BUILD/ADVANCED · $299.00
+                </option>
+                <option value="LABOR/BUILD/GUIDED">
+                  LABOR/BUILD/GUIDED · $149.99
+                </option>
+                <option value="LABOR/HOUR">LABOR/HOUR · $99.99</option>
+                <option value="LABOR/HOUR/VETERAN">
+                  LABOR/HOUR/VETERAN · $79.99
+                </option>
+                <option value="LABOR/QFR QUICK FIX (15-30MIN)">
+                  LABOR/QFR QUICK FIX (15-30MIN) · $49.99
+                </option>
+                <option value="LABOR/QF QUICK FIX GOOGLE REVIEW">
+                  LABOR/QF QUICK FIX GOOGLE REVIEW · $0.00
+                </option>
+              </select>
+            </label>
+            <label class="toggle-row">
+              <input type="checkbox" name="laptopMultiplier" />
+              <span class="toggle-indicator" aria-hidden="true"></span>
+              <span class="toggle-copy">
+                <strong>Laptop repair above Windows level</strong>
+                <small>Apply 2× labor quantity</small>
+              </span>
+            </label>
+            <p class="price-line" id="price-line">
+              Select a labor SKU to see the total.
+            </p>
+          </section>
+        </div>
+
+        <div
+          class="tab-panel"
+          id="panel-service"
+          role="tabpanel"
+          aria-labelledby="tab-service"
+          hidden
+        >
+          <section class="section-block">
+            <div class="section-heading">
+              <h2>Choose this service</h2>
+              <span id="service-count">0 selected</span>
+            </div>
+            <label class="field"
+              ><span>Service</span
+              ><select name="serviceType">
+                <option value="diagnostic">Diagnostic</option>
+                <option value="repair">Repair</option>
+                <option value="upgrade">Upgrade</option>
+              </select></label
+            >
+            <label class="field"
+              ><span>Add service plan</span
+              ><select id="service-option">
+                <option value="">Choose a category...</option>
+              </select></label
+            >
+            <div id="selected-options" class="selected-list"></div>
+            <label class="field"
+              ><span>Add optional tool</span
+              ><select id="optional-tool">
+                <option value="">Choose a tool...</option>
+              </select></label
+            >
+            <div id="selected-tools" class="selected-list"></div>
+            <div id="plan-responses" class="plan-responses"></div>
+            <div class="note-preview">
+              <div class="preview-heading">
+                <strong>Tech Notes</strong
+                ><span>Appended to existing notes</span>
+              </div>
+              <pre id="service-preview"></pre>
+            </div>
+          </section>
+        </div>
+
+        <div
+          class="tab-panel"
+          id="panel-qc"
+          role="tabpanel"
+          aria-labelledby="tab-qc"
+          hidden
+        >
+          <section class="section-block">
+            <div class="section-heading">
+              <h2>QC Checklist</h2>
+              <span id="qc-progress">0 checks</span>
+            </div>
+            <div id="qc-checklist" class="qc-checklist"></div>
+            <div class="field-row">
+              <label class="field"
+                ><span>OCCT test</span
+                ><select name="occtTest">
+                  <option value="">Choose...</option>
+                  <option value="1 hour">1 hr</option>
+                  <option value="No GPU">No GPU</option>
+                  <option value="12 hour">12 hr</option>
+                </select></label
+              >
+              <label class="field"
+                ><span>OCCT result</span
+                ><select name="occtResult">
+                  <option value="">Not set</option>
+                  <option value="passed">Passed</option>
+                  <option value="failed">Failed</option>
+                </select></label
+              >
+            </div>
+            <label class="field"
+              ><span>OCCT failure details</span
+              ><input name="occtFailure" autocomplete="off"
+            /></label>
+            <div class="field-row">
+              <label class="field"
+                ><span>BIOS version</span><input name="biosVersion"
+              /></label>
+              <label class="field"
+                ><span>Max CPU temp</span
+                ><input name="maxCpuTemp" placeholder="°C"
+              /></label>
+            </div>
+            <div class="field-row">
+              <label class="field"
+                ><span>Max CPU power</span
+                ><input name="maxCpuPower" placeholder="W"
+              /></label>
+              <label class="field"
+                ><span>Max CPU frequency</span
+                ><input name="maxCpuFrequency" placeholder="MHz / GHz"
+              /></label>
+            </div>
+            <label class="field"
+              ><span>Max GPU temp</span
+              ><input name="maxGpuTemp" placeholder="°C"
+            /></label>
+            <div class="note-preview">
+              <div class="preview-heading">
+                <strong>QC note</strong><span>Appended to existing notes</span>
+              </div>
+              <pre id="qc-preview"></pre>
+            </div>
+          </section>
+        </div>
 
         <button class="apply-button" type="submit">
-          <span>Fill active work order</span>
+          <span>Append notes and fill order</span>
           <span aria-hidden="true">↗</span>
         </button>
       </form>
@@ -159,6 +409,6 @@
         Fields are filled in place. Review changes and submit in Shopify.
       </footer>
     </main>
-    <script src="popup.js"></script>
+    <script type="module" src="popup.js"></script>
   </body>
 </html>

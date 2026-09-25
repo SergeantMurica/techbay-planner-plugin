@@ -2,7 +2,7 @@
   "manifest_version": 3,
   "name": "Techbay Work Order Assistant",
   "version": "1.0.0",
-  "description": "Fill Techbay work-order fields and add labor products in Shopify Admin.",
+  "description": "Manage check-in, service plans, technician notes, QC, and labor in Shopify Admin.",
   "permissions": ["activeTab", "scripting", "storage"],
   "host_permissions": ["https://admin.shopify.com/*"],
   "optional_host_permissions": ["https://app.workmatepos.co/*"],

@@ -3,15 +3,46 @@
   globalThis.__techbayWorkOrderListenerInstalled = true;
 
   const FIELD_LABELS = {
-    device: ["device"],
+    device: ["device", "device type", "computer type"],
     makeModel: ["make/model", "make / model", "make model"],
     serial: ["serial", "serial number"],
     pin: ["pin"],
+    checkInInitials: ["initials", "technician initials"],
+    esd: ["esd", "esd date"],
+    reimage: ["reimage/wipe", "reimage / wipe", "reimage"],
+    backup: ["back-up", "backup", "back up"],
     image: ["image"],
     s2s: ["s2s"],
     priority: ["priority"],
     dailyUpdate: ["daily update"],
+    issues: ["issue(s)", "issues", "issue"],
+    techNotes: ["tech notes", "technician notes"],
+    solutions: ["solutions", "solution"],
+    callbackNotes: ["callback notes", "callback"],
+    checkInNote: [
+      "work order notes",
+      "order notes",
+      "check-in notes",
+      "check in notes",
+      "check-in",
+      "check in",
+      "notes",
+      "note",
+    ],
+    serviceNote: ["tech notes", "technician notes"],
+    qcNote: ["qc checklist", "completion notes", "qc notes"],
   };
+
+  const APPEND_FIELDS = new Set([
+    "dailyUpdate",
+    "issues",
+    "techNotes",
+    "solutions",
+    "callbackNotes",
+    "checkInNote",
+    "serviceNote",
+    "qcNote",
+  ]);
 
   const LABOR_PRICES = {
     "LABOR/BUILD": 199,
@@ -107,8 +138,22 @@
     return undefined;
   }
 
-  function findField(keys) {
+  function findField(keys, exactOnly = false) {
     const labels = [...document.querySelectorAll("label")];
+    for (const label of labels) {
+      if (
+        !isVisible(label) ||
+        !keys.includes(normalize(label.textContent || ""))
+      )
+        continue;
+      const control = controlsFromLabel(label).find(
+        (item) => item.type !== "file" && isVisible(item),
+      );
+      if (control) return control;
+    }
+
+    if (exactOnly) return undefined;
+
     for (const label of labels) {
       if (!isVisible(label) || !labelMatches(label.textContent || "", keys))
         continue;
@@ -150,7 +195,41 @@
     control.dispatchEvent(new Event("change", { bubbles: true }));
   }
 
+  function appendValue(control, value) {
+    const current = control.isContentEditable
+      ? control.textContent
+      : control.value;
+    if ((current || "").includes(value.trim())) return;
+    const combined = current?.trim()
+      ? `${current.trimEnd()}\n\n${value}`
+      : value;
+    dispatchValue(control, combined);
+  }
+
   async function setControlValue(control, value) {
+    if (control instanceof HTMLInputElement && control.type === "radio") {
+      const group = [
+        ...document.querySelectorAll('input[type="radio"]'),
+      ].filter((candidate) => candidate.name === control.name);
+      const wanted = normalize(value);
+      const choice = group.find((candidate) => {
+        const label = candidate.labels
+          ? [...candidate.labels]
+              .map((item) => item.textContent || "")
+              .join(" ")
+          : "";
+        return (
+          normalize(candidate.value) === wanted ||
+          normalize(label).includes(wanted)
+        );
+      });
+      if (!choice) return false;
+      choice.checked = true;
+      choice.dispatchEvent(new Event("input", { bubbles: true }));
+      choice.dispatchEvent(new Event("change", { bubbles: true }));
+      return true;
+    }
+
     if (control.getAttribute("role") !== "combobox") {
       dispatchValue(control, value);
       return true;
@@ -296,16 +375,26 @@
   async function fillWorkOrder(values) {
     let filled = 0;
     const missing = [];
+    const fieldValues = {
+      ...values,
+      reimage:
+        { yes: "Yes", no: "No", call: "Call Me First" }[values.reimage] ||
+        values.reimage,
+      backup: { yes: "Yes", no: "No" }[values.backup] || values.backup,
+    };
     for (const [name, labels] of Object.entries(FIELD_LABELS)) {
-      const value = String(values[name] ?? "").trim();
+      const value = String(fieldValues[name] ?? "").trim();
       if (!value) continue;
 
-      const control = findField(labels);
+      const control = findField(labels, name === "checkInNote");
       if (!control) {
         missing.push(name === "makeModel" ? "Make/Model" : name);
         continue;
       }
-      if (await setControlValue(control, value)) {
+      if (APPEND_FIELDS.has(name)) {
+        appendValue(control, value);
+        filled += 1;
+      } else if (await setControlValue(control, value)) {
         filled += 1;
       } else {
         missing.push(
