@@ -1,0 +1,164 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Techbay Work Order Assistant</title>
+    <link rel="stylesheet" href="popup.css" />
+  </head>
+  <body>
+    <main class="popup-shell">
+      <header class="topbar">
+        <div class="brand-mark" aria-hidden="true">T</div>
+        <div class="brand-copy">
+          <p class="eyebrow">TECHBAY / WORK MATE</p>
+          <h1>Order assistant</h1>
+        </div>
+        <span
+          class="connection"
+          id="connection"
+          aria-label="Checking active tab"
+        >
+          <span class="connection-dot"></span>
+        </span>
+      </header>
+
+      <div class="order-strip">
+        <span class="order-label">ACTIVE ORDER</span>
+        <span class="order-number" id="order-number">No order detected</span>
+      </div>
+
+      <form id="order-form">
+        <section class="section-block" aria-labelledby="device-heading">
+          <div class="section-heading">
+            <h2 id="device-heading">Device details</h2>
+            <span>WORK ORDER FIELDS</span>
+          </div>
+
+          <label class="field">
+            <span>Device</span>
+            <input
+              name="device"
+              autocomplete="off"
+              placeholder="Desktop / Laptop"
+            />
+          </label>
+          <label class="field">
+            <span>Make / Model</span>
+            <input
+              name="makeModel"
+              autocomplete="off"
+              placeholder="Brand and model"
+            />
+          </label>
+          <div class="field-row">
+            <label class="field">
+              <span>Serial</span>
+              <input name="serial" autocomplete="off" />
+            </label>
+            <label class="field">
+              <span>PIN</span>
+              <input name="pin" autocomplete="off" />
+            </label>
+          </div>
+          <div class="field-row">
+            <label class="field">
+              <span>S2S</span>
+              <select name="s2s">
+                <option value="">Not set</option>
+                <option value="Yes">Yes</option>
+                <option value="No">No</option>
+              </select>
+            </label>
+            <label class="field">
+              <span>Priority</span>
+              <select name="priority">
+                <option value="">Not set</option>
+                <option value="Normal">Normal</option>
+                <option value="High">High</option>
+                <option value="Urgent">Urgent</option>
+              </select>
+            </label>
+          </div>
+          <label class="field">
+            <span>Image URL</span>
+            <input
+              name="image"
+              autocomplete="off"
+              placeholder="Optional image link"
+            />
+          </label>
+          <label class="field">
+            <span>Attach image</span>
+            <input name="imageFile" type="file" accept="image/*" />
+          </label>
+          <label class="field">
+            <span>Daily update</span>
+            <textarea
+              name="dailyUpdate"
+              rows="3"
+              placeholder="Customer-facing work-order update"
+            ></textarea>
+          </label>
+        </section>
+
+        <section
+          class="section-block labor-block"
+          aria-labelledby="labor-heading"
+        >
+          <div class="section-heading">
+            <h2 id="labor-heading">Labor</h2>
+            <span>SHOPIFY PRODUCT</span>
+          </div>
+          <label class="field">
+            <span>Labor SKU</span>
+            <select name="laborSku" id="labor-sku">
+              <option value="">Do not add labor</option>
+              <option value="LABOR/BUILD">LABOR/BUILD · $199.00</option>
+              <option value="LABOR/BUILD/ADVANCED">
+                LABOR/BUILD/ADVANCED · $299.00
+              </option>
+              <option value="LABOR/BUILD/GUIDED">
+                LABOR/BUILD/GUIDED · $149.99
+              </option>
+              <option value="LABOR/HOUR">LABOR/HOUR · $99.99</option>
+              <option value="LABOR/HOUR/VETERAN">
+                LABOR/HOUR/VETERAN · $79.99
+              </option>
+              <option value="LABOR/QFR QUICK FIX (15-30MIN)">
+                LABOR/QFR QUICK FIX (15-30MIN) · $49.99
+              </option>
+              <option value="LABOR/QF QUICK FIX GOOGLE REVIEW">
+                LABOR/QF QUICK FIX GOOGLE REVIEW · $0.00
+              </option>
+            </select>
+          </label>
+          <label class="toggle-row">
+            <input type="checkbox" name="laptopMultiplier" />
+            <span class="toggle-indicator" aria-hidden="true"></span>
+            <span class="toggle-copy">
+              <strong>Laptop repair above Windows level</strong>
+              <small>Apply 2× labor quantity</small>
+            </span>
+          </label>
+          <p class="price-line" id="price-line">
+            Select a labor SKU to see the total.
+          </p>
+        </section>
+
+        <button class="apply-button" type="submit">
+          <span>Fill active work order</span>
+          <span aria-hidden="true">↗</span>
+        </button>
+      </form>
+
+      <div class="status" id="status" role="status" aria-live="polite">
+        Open a Shopify Work Mate order to begin.
+      </div>
+      <footer>
+        Fields are filled in place. Review changes and submit in Shopify.
+      </footer>
+    </main>
+    <script src="popup.js"></script>
+  </body>
+</html>
