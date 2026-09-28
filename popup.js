@@ -1,7 +1,9 @@
 import {
   optionalToolsByDevice,
   plannerOptionsByDevice,
-} from "./lib/templates.js";
+  serviceTypeLabels,
+  serviceTypesByDevice,
+} from "./lib/template-data.js";
 import { DEFAULT_THEME, THEMES } from "./lib/themes.js";
 
 const DRAFT_KEY = "techbay-work-order-draft-v1";
@@ -72,6 +74,7 @@ const checkInFieldNames = new Set([
 ]);
 let activeTabId;
 let activeOrderNumber = "";
+let draftSaveTimer;
 
 function todayLabel() {
   const date = new Date();
@@ -127,6 +130,19 @@ function applyTheme(themeId) {
 
 function currentPlannerDevice() {
   return form.elements.device.value === "Laptop" ? "laptop" : "desktop";
+}
+
+function updateServiceTypeOptions() {
+  const serviceType = form.elements.serviceType;
+  const availableTypes = serviceTypesByDevice[currentPlannerDevice()];
+  const selectedType = availableTypes.includes(serviceType.value)
+    ? serviceType.value
+    : availableTypes[0];
+
+  serviceType.replaceChildren(
+    ...availableTypes.map((type) => new Option(serviceTypeLabels[type], type)),
+  );
+  serviceType.value = selectedType;
 }
 
 function currentServiceType() {
@@ -348,14 +364,32 @@ function renderQcChecklist() {
   }
 }
 
-function saveDraft() {
-  values.selectedOptions = [...selectedOptions];
-  values.selectedTools = [...selectedTools];
-  values.planResponses = { ...planResponses };
-  chrome.storage.local.set({
-    [DRAFT_KEY]: values,
-    [INITIALS_KEY]: initialsInput.value,
-  });
+function saveDraft(immediate = false) {
+  clearTimeout(draftSaveTimer);
+
+  const persist = () => {
+    const draft = Object.fromEntries(new FormData(form).entries());
+    for (const checkbox of form.querySelectorAll(
+      'input[type="checkbox"][name]',
+    )) {
+      draft[checkbox.name] = checkbox.checked;
+    }
+    draft.selectedOptions = [...selectedOptions];
+    draft.selectedTools = [...selectedTools];
+    draft.planResponses = { ...planResponses };
+
+    chrome.storage.local
+      .set({
+        [DRAFT_KEY]: draft,
+        [INITIALS_KEY]: initialsInput.value,
+      })
+      .catch((error) =>
+        console.error("Could not save work-order draft.", error),
+      );
+  };
+
+  if (immediate) persist();
+  else draftSaveTimer = setTimeout(persist, 200);
 }
 
 async function sendFillMessage(tabId, values) {
@@ -434,6 +468,7 @@ async function initialize() {
   if (!form.elements.workDate.value)
     form.elements.workDate.value = todayLabel();
   if (!form.elements.esd.value) form.elements.esd.value = todayLabel();
+  updateServiceTypeOptions();
   renderServices();
   const theme = await chrome.storage.local.get(THEME_KEY);
   applyTheme(theme[THEME_KEY] || DEFAULT_THEME);
@@ -444,7 +479,7 @@ form.addEventListener("input", () => {
   updatePreviews();
 });
 form.addEventListener("change", () => {
-  saveDraft();
+  saveDraft(true);
   updatePreviews();
 });
 
@@ -452,7 +487,10 @@ initialsInput.addEventListener("input", () => {
   saveDraft();
   updatePreviews();
 });
-initialsInput.addEventListener("change", saveDraft);
+initialsInput.addEventListener("change", () => saveDraft(true));
+initialsInput.addEventListener("blur", () => saveDraft(true));
+form.addEventListener("focusout", () => saveDraft(true));
+window.addEventListener("pagehide", () => saveDraft(true));
 
 document.querySelectorAll(".tab").forEach((tab) => {
   tab.addEventListener("click", () => {
@@ -483,6 +521,7 @@ form.elements.device.addEventListener("change", () => {
   selectedOptions.clear();
   selectedTools.clear();
   for (const key of Object.keys(planResponses)) delete planResponses[key];
+  updateServiceTypeOptions();
   renderServices();
 });
 form.elements.serviceType.addEventListener("change", () => {
