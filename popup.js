@@ -369,6 +369,7 @@ function saveDraft(immediate = false) {
 
   const persist = () => {
     const draft = Object.fromEntries(new FormData(form).entries());
+    delete draft.workDate;
     for (const checkbox of form.querySelectorAll(
       'input[type="checkbox"][name]',
     )) {
@@ -448,7 +449,14 @@ async function initialize() {
   const values = stored[DRAFT_KEY];
   if (values) {
     for (const [name, value] of Object.entries(values)) {
-      if (["selectedOptions", "selectedTools", "planResponses"].includes(name))
+      if (
+        [
+          "selectedOptions",
+          "selectedTools",
+          "planResponses",
+          "workDate",
+        ].includes(name)
+      )
         continue;
       const control = form.elements.namedItem(name);
       if (!control) continue;
