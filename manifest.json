@@ -2,7 +2,7 @@
   "manifest_version": 3,
   "name": "Techbay Work Order Assistant",
   "version": "1.0.0",
-  "description": "Manage check-in, service plans, technician notes, QC in Shopify Admin.",
+  "description": "Manage check-in, service plans, technician notes, callback notes in Shopify Admin.",
   "permissions": ["activeTab", "scripting", "storage", "clipboardWrite"],
   "host_permissions": ["https://admin.shopify.com/*"],
   "optional_host_permissions": ["https://app.workmatepos.co/*"],

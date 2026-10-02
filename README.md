@@ -1,6 +1,6 @@
 # Techbay Work Order Assistant
 
-Chrome Manifest V3 extension for managing a Shopify Admin Work Mate work order from the browser toolbar. The popup includes check-in, device-specific service plans, technician responses, QC, and the shared Techbay tool themes.
+Chrome Manifest V3 extension for managing a Shopify Admin Work Mate work order from the browser toolbar. The popup includes check-in, device-specific service plans, technician responses, callback notes, and the shared Techbay tool themes.
 
 ## Install for local use
 
@@ -11,4 +11,4 @@ Chrome Manifest V3 extension for managing a Shopify Admin Work Mate work order f
 
 ## Use
 
-Use the **Check in**, **Choose this service**, and **QC Checklist** tabs to enter order details, pretty simple.
+Use the **Check in**, **Choose this service**, and **Callback Notes** tabs to enter order details, pretty simple.

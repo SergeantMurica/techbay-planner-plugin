@@ -76,14 +76,14 @@
           </button>
           <button
             class="tab"
-            id="tab-qc"
+            id="tab-callback"
             type="button"
             role="tab"
             aria-selected="false"
-            aria-controls="panel-qc"
-            data-tab="qc"
+            aria-controls="panel-callback"
+            data-tab="callback"
           >
-            QC Checklist
+            Callback Notes
           </button>
         </nav>
 
@@ -267,68 +267,30 @@
 
         <div
           class="tab-panel"
-          id="panel-qc"
+          id="panel-callback"
           role="tabpanel"
-          aria-labelledby="tab-qc"
+          aria-labelledby="tab-callback"
           hidden
         >
           <section class="section-block">
             <div class="section-heading">
-              <h2>QC Checklist</h2>
-              <span id="qc-progress">0 checks</span>
-            </div>
-            <div id="qc-checklist" class="qc-checklist"></div>
-            <div class="field-row">
-              <label class="field"
-                ><span>OCCT test</span
-                ><select name="occtTest">
-                  <option value="">Choose...</option>
-                  <option value="1 hour">1 hr</option>
-                  <option value="No GPU">No GPU</option>
-                  <option value="12 hour">12 hr</option>
-                </select></label
-              >
-              <label class="field"
-                ><span>OCCT result</span
-                ><select name="occtResult">
-                  <option value="">Not set</option>
-                  <option value="passed">Passed</option>
-                  <option value="failed">Failed</option>
-                </select></label
-              >
+              <h2>Callback Notes</h2>
+              <span>EVERY CONTACT</span>
             </div>
             <label class="field"
-              ><span>OCCT failure details</span
-              ><input name="occtFailure" autocomplete="off"
-            /></label>
-            <div class="field-row">
-              <label class="field"
-                ><span>BIOS version</span><input name="biosVersion"
-              /></label>
-              <label class="field"
-                ><span>Max CPU temp</span
-                ><input name="maxCpuTemp" placeholder="°C"
-              /></label>
-            </div>
-            <div class="field-row">
-              <label class="field"
-                ><span>Max CPU power</span
-                ><input name="maxCpuPower" placeholder="W"
-              /></label>
-              <label class="field"
-                ><span>Max CPU frequency</span
-                ><input name="maxCpuFrequency" placeholder="MHz / GHz"
-              /></label>
-            </div>
-            <label class="field"
-              ><span>Max GPU temp</span
-              ><input name="maxGpuTemp" placeholder="°C"
-            /></label>
+              ><span>Customer contacts this session</span
+              ><textarea
+                name="callbackLog"
+                rows="6"
+                placeholder="One line per contact. Example: Texted Cx update; full diagnostics tomorrow after 12hr OCCT"
+              ></textarea>
+            </label>
             <div class="note-preview">
               <div class="preview-heading">
-                <strong>QC note</strong><span>Copied for manual paste</span>
+                <strong>Callback note</strong
+                ><span>Copied for manual paste</span>
               </div>
-              <pre id="qc-preview"></pre>
+              <pre id="callback-preview"></pre>
             </div>
           </section>
         </div>

@@ -24,35 +24,9 @@ const optionalTool = document.querySelector("#optional-tool");
 const selectedOptionsNode = document.querySelector("#selected-options");
 const selectedToolsNode = document.querySelector("#selected-tools");
 const planResponsesNode = document.querySelector("#plan-responses");
-const qcChecklistNode = document.querySelector("#qc-checklist");
 const selectedOptions = new Set();
 const selectedTools = new Set();
 const planResponses = {};
-const qcItems = [
-  ["bios", "Updated and verified latest BIOS version"],
-  [
-    "biosSettings",
-    "Set applicable BIOS settings: RAM profile, Resize BAR, Intel temp limits, PBO off, Secure Boot",
-  ],
-  ["fansRgb", "Verified all fans spin and RGB LEDs work appropriately"],
-  [
-    "tertiaryDrives",
-    "Verified tertiary drives are connected and initialized in Disk Management",
-  ],
-  [
-    "driversAndDesktop",
-    "Installed relevant drivers, set Chrome default, removed Edge, pinned programs, set Meta wallpaper and clock",
-  ],
-  ["wifi", "Checked for Wi-Fi networks"],
-  [
-    "activation",
-    "Verified Windows activation and synchronized or quoted OEM key as needed",
-  ],
-  ["cleaned", "Cleaned system interior and exterior"],
-  ["rebooted", "Rebooted after cleaning and verified continued functionality"],
-  ["occt", "Ran OCCT and verified results make sense"],
-  ["psuOff", "Verified PSU switch is off"],
-];
 const checkInFieldNames = new Set([
   "device",
   "priority",
@@ -89,9 +63,9 @@ function showStatus(message, kind = "") {
 function updateSubmitLabel(tabName) {
   submitLabel.textContent =
     tabName === "service"
-      ? "Copy Service Note"
-      : tabName === "qc"
-        ? "Copy QC Note"
+      ? "Copy Tech Notes"
+      : tabName === "callback"
+        ? "Copy Callback Note"
         : "Fill Check-in and append note";
 }
 
@@ -208,12 +182,14 @@ function renderServices() {
 function removePlan(id) {
   selectedOptions.delete(id);
   delete planResponses[id];
+  delete planResponses[`${id}:why`];
   renderServices();
 }
 
 function removeTool(id) {
   selectedTools.delete(id);
   delete planResponses[id];
+  delete planResponses[`${id}:why`];
   renderServices();
 }
 
@@ -225,17 +201,31 @@ function renderPlanResponses() {
     const label = document.createElement("label");
     label.className = "field response-field";
     const title = document.createElement("span");
-    title.textContent = `${item.label} · Technician response`;
+    title.textContent = `${item.label} · What you did and found`;
+    const guide = document.createElement("small");
+    guide.className = "step-guide";
+    guide.textContent = `Guide: ${item.steps ? item.steps.map((step) => step.title).join("; ") : item.step}`;
+    const why = document.createElement("input");
+    why.className = "why-input";
+    why.autocomplete = "off";
+    why.value = planResponses[`${item.id}:why`] || "";
+    why.placeholder = "Why are we checking this? (optional)";
+    why.addEventListener("input", () => {
+      planResponses[`${item.id}:why`] = why.value;
+      saveDraft();
+      updatePreviews();
+    });
     const textarea = document.createElement("textarea");
-    textarea.rows = 2;
+    textarea.rows = 3;
     textarea.value = planResponses[item.id] || "";
-    textarea.placeholder = "Record findings or work completed";
+    textarea.placeholder =
+      "One line per action, past tense. Example: Pulled RAM; test RAM in; no post, DRAM light on";
     textarea.addEventListener("input", () => {
       planResponses[item.id] = textarea.value;
       saveDraft();
       updatePreviews();
     });
-    label.append(title, textarea);
+    label.append(title, guide, why, textarea);
     planResponsesNode.append(label);
   }
 }
@@ -251,7 +241,15 @@ function mark(value, expected) {
 function noteHeader() {
   const date = form.elements.workDate.value.trim() || "__/__";
   const initials = initialsInput.value.trim() || "__";
-  return `${date} - ${initials}`;
+  return `${date} ${initials}`;
+}
+
+function toBullets(text) {
+  return text
+    .split(/\r?\n/)
+    .map((line) => line.trim().replace(/^[-*]\s*/, ""))
+    .filter(Boolean)
+    .map((line) => `-${line}`);
 }
 
 function formatDailyUpdate(text) {
@@ -282,86 +280,25 @@ function getCheckInNote() {
 function getServiceNote() {
   const plans = activePlans().filter((plan) => selectedOptions.has(plan.id));
   const tools = activeTools().filter((tool) => selectedTools.has(tool.id));
-  const path =
-    currentServiceType() === "upgrade"
-      ? "PLANNED UPGRADE PATH"
-      : `${currentServiceType().toUpperCase()} PATH`;
-  const lines = [
-    noteHeader(),
-    `[${path}: ${plans.map((plan) => plan.label).join(" -> ") || "NO CATEGORY SELECTED"}]`,
-  ];
-  for (const plan of plans) {
-    for (const step of plan.steps) lines.push(`-- ${step.title}`);
-    const response = (planResponses[plan.id] || "").trim();
-    if (response) lines.push(`   Technician response: ${response}`);
+  const lines = [noteHeader()];
+  for (const item of [...plans, ...tools]) {
+    const why = (planResponses[`${item.id}:why`] || "").trim();
+    lines.push("", `${item.label}${why ? ` (${why})` : ""}:`);
+    lines.push(...toBullets(planResponses[item.id] || ""));
   }
-  for (const tool of tools) {
-    const response = (planResponses[tool.id] || "").trim();
-    lines.push(`-- ${tool.step}${response ? ` -> ${response}` : " ->"}`);
-  }
-  if (!plans.length && !tools.length)
-    lines.push("-- Select a service category or optional tool --");
-  if (
-    plans.length &&
-    !plans.some((plan) => (planResponses[plan.id] || "").trim())
-  ) {
-    lines.push("-- Technician findings and conclusion --");
-  }
+  if (lines.length === 1) lines.push("-");
   return lines.join("\n");
 }
 
-function getQcNote() {
-  const checks = qcItems.map(([key, label]) => {
-    const input = form.querySelector(`[name="qc-${key}"]`);
-    return `[${input?.checked ? "X" : " "}] ${label}`;
-  });
-  const occtTest = form.elements.occtTest.value;
-  const occtResult = form.elements.occtResult.value;
-  const failure = form.elements.occtFailure.value.trim();
-  return [
-    "QC Checklist",
-    "",
-    ...checks,
-    "",
-    "OCCT verification:",
-    occtTest && occtResult
-      ? `OCCT record: ${occtTest} -- ${occtResult.toUpperCase()}${occtResult === "failed" && failure ? ` (${failure})` : ""}`
-      : "OCCT record: ________",
-    "",
-    "Test readings:",
-    `BIOS version: ${form.elements.biosVersion.value || "________"}`,
-    `Max CPU temp: ${form.elements.maxCpuTemp.value || "________"}`,
-    `Max CPU power: ${form.elements.maxCpuPower.value || "________"}`,
-    `Max CPU frequency: ${form.elements.maxCpuFrequency.value || "________"}`,
-    `Max GPU temp: ${form.elements.maxGpuTemp.value || "________"}`,
-    "",
-    `Verified by: ${initialsInput.value || "________"}    Date completed: ${form.elements.workDate.value || "________"}`,
-  ].join("\n");
+function getCallbackNote() {
+  const entries = toBullets(form.elements.callbackLog.value);
+  return [noteHeader(), ...(entries.length ? entries : ["-"])].join("\n");
 }
 
 function updatePreviews() {
   document.querySelector("#checkin-preview").textContent = getCheckInNote();
   document.querySelector("#service-preview").textContent = getServiceNote();
-  document.querySelector("#qc-preview").textContent = getQcNote();
-  const complete = qcItems.filter(
-    ([key]) => form.querySelector(`[name="qc-${key}"]`)?.checked,
-  ).length;
-  document.querySelector("#qc-progress").textContent =
-    `${complete}/${qcItems.length} checks`;
-}
-
-function renderQcChecklist() {
-  for (const [key, labelText] of qcItems) {
-    const label = document.createElement("label");
-    label.className = "qc-item";
-    const input = document.createElement("input");
-    input.type = "checkbox";
-    input.name = `qc-${key}`;
-    const text = document.createElement("span");
-    text.textContent = labelText;
-    label.append(input, text);
-    qcChecklistNode.append(label);
-  }
+  document.querySelector("#callback-preview").textContent = getCallbackNote();
 }
 
 function saveDraft(immediate = false) {
@@ -445,7 +382,6 @@ async function initialize() {
   }
 
   const stored = await chrome.storage.local.get([DRAFT_KEY, INITIALS_KEY]);
-  renderQcChecklist();
   const values = stored[DRAFT_KEY];
   if (values) {
     for (const [name, value] of Object.entries(values)) {
@@ -538,17 +474,16 @@ form.elements.serviceType.addEventListener("change", () => {
   for (const key of Object.keys(planResponses)) delete planResponses[key];
   renderServices();
 });
-qcChecklistNode.addEventListener("change", updatePreviews);
 
 form.addEventListener("submit", async (event) => {
   event.preventDefault();
   const activeTab = document.querySelector(".tab.active")?.dataset.tab;
-  if (activeTab === "service" || activeTab === "qc") {
-    const note = activeTab === "service" ? getServiceNote() : getQcNote();
+  if (activeTab === "service" || activeTab === "callback") {
+    const note = activeTab === "service" ? getServiceNote() : getCallbackNote();
     try {
       await navigator.clipboard.writeText(note);
       showStatus(
-        `${activeTab === "service" ? "Service" : "QC"} note copied. Paste it into WorkMate Notes.`,
+        `${activeTab === "service" ? "Tech" : "Callback"} note copied. Paste it into WorkMate Notes.`,
         "success",
       );
     } catch {
