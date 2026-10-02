@@ -324,6 +324,30 @@ h2 {
   flex-wrap: wrap;
   gap: 5px;
 }
+.step-guide {
+  padding: 7px 9px;
+  border: 1px solid var(--line);
+  border-left: 2px solid var(--acid);
+  border-radius: 3px;
+  background: var(--panel);
+}
+.step-guide summary {
+  color: var(--muted);
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  cursor: pointer;
+}
+.step-guide ol {
+  margin: 6px 0 0;
+  padding-left: 18px;
+  font-size: 11px;
+  line-height: 1.45;
+}
+.step-guide li + li {
+  margin-top: 3px;
+}
 .choice-chip {
   border: 1px solid color-mix(in srgb, var(--acid) 48%, var(--line));
   border-radius: 3px;

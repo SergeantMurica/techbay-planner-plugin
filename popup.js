@@ -62,11 +62,7 @@ function showStatus(message, kind = "") {
 
 function updateSubmitLabel(tabName) {
   submitLabel.textContent =
-    tabName === "service"
-      ? "Copy Tech Notes"
-      : tabName === "callback"
-        ? "Copy Callback Note"
-        : "Fill Check-in and append note";
+    tabName === "service" ? "Copy Tech Notes" : "Fill Check-in and append note";
 }
 
 function getOrderNumber(url = "") {
@@ -198,13 +194,26 @@ function renderPlanResponses() {
   const plans = activePlans().filter((plan) => selectedOptions.has(plan.id));
   const tools = activeTools().filter((tool) => selectedTools.has(tool.id));
   for (const item of [...plans, ...tools]) {
-    const label = document.createElement("label");
+    const label = document.createElement("div");
     label.className = "field response-field";
     const title = document.createElement("span");
     title.textContent = `${item.label} · What you did and found`;
-    const guide = document.createElement("small");
+    const guide = document.createElement("details");
     guide.className = "step-guide";
-    guide.textContent = `Guide: ${item.steps ? item.steps.map((step) => step.title).join("; ") : item.step}`;
+    guide.open = true;
+    const guideSummary = document.createElement("summary");
+    guideSummary.textContent = item.steps
+      ? "Suggested steps"
+      : "Suggested step";
+    const guideList = document.createElement("ol");
+    for (const text of item.steps
+      ? item.steps.map((step) => step.title)
+      : [item.step]) {
+      const entry = document.createElement("li");
+      entry.textContent = text;
+      guideList.append(entry);
+    }
+    guide.append(guideSummary, guideList);
     const why = document.createElement("input");
     why.className = "why-input";
     why.autocomplete = "off";
@@ -290,15 +299,9 @@ function getServiceNote() {
   return lines.join("\n");
 }
 
-function getCallbackNote() {
-  const entries = toBullets(form.elements.callbackLog.value);
-  return [noteHeader(), ...(entries.length ? entries : ["-"])].join("\n");
-}
-
 function updatePreviews() {
   document.querySelector("#checkin-preview").textContent = getCheckInNote();
   document.querySelector("#service-preview").textContent = getServiceNote();
-  document.querySelector("#callback-preview").textContent = getCallbackNote();
 }
 
 function saveDraft(immediate = false) {
@@ -478,14 +481,11 @@ form.elements.serviceType.addEventListener("change", () => {
 form.addEventListener("submit", async (event) => {
   event.preventDefault();
   const activeTab = document.querySelector(".tab.active")?.dataset.tab;
-  if (activeTab === "service" || activeTab === "callback") {
-    const note = activeTab === "service" ? getServiceNote() : getCallbackNote();
+  if (activeTab === "service") {
+    const note = getServiceNote();
     try {
       await navigator.clipboard.writeText(note);
-      showStatus(
-        `${activeTab === "service" ? "Tech" : "Callback"} note copied. Paste it into WorkMate Notes.`,
-        "success",
-      );
+      showStatus("Tech note copied. Paste it into WorkMate Notes.", "success");
     } catch {
       showStatus("Could not copy the note to the clipboard.", "error");
     }
