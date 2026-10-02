@@ -21,7 +21,16 @@
       "duration",
       "result"
     ],
+    "nextStepFields": [
+      "recommendedAction",
+      "quotedScope",
+      "estimatedLabor",
+      "estimatedParts",
+      "customerDecision"
+    ],
     "rules": [
+      "When a primary fault is found, assess what else it may have damaged before quoting. Record each part as confirmed damaged, tested good, or not yet tested.",
+      "Record recommended next steps with a quoted scope (labor and parts) as part of the diagnostic outcome.",
       "A completed step must describe what was actually done or observed.",
       "A skipped or blocked step must include a reason.",
       "Record actual readings and test durations when available. Do not invent them.",
@@ -41,6 +50,9 @@
     "workPerformed",
     "testResults",
     "unresolvedIssues",
+    "collateralDamageFindings",
+    "recommendedNextSteps",
+    "quotedScope",
     "customerSummary",
     "technician",
     "completedAt"
@@ -69,6 +81,9 @@
       }
     ],
     "closeout": [
+      {
+        "title": "Record recommended next steps with a quoted scope of labor and parts"
+      },
       {
         "title": "Record parts installed, settings changed, and tests performed"
       },
@@ -106,6 +121,12 @@
             },
             {
               "title": "Record the test method, result, and most likely cause"
+            },
+            {
+              "title": "If the supply failed, assess motherboard, RAM, CPU, GPU, and drives for collateral damage"
+            },
+            {
+              "title": "Quote the repair scope: added labor plus parts for each damaged component"
             }
           ]
         },
@@ -160,7 +181,10 @@
           "description": "We’ll narrow down startup, connection, and motherboard faults.",
           "steps": [
             {
-              "title": "Inspect for corrosion, damaged pins, and burnt areas"
+              "title": "Inspect for corrosion, burnt areas, and bent, missing, or pushed-in CPU socket pins"
+            },
+            {
+              "title": "If socket pins are damaged, stop and follow the physical damage path"
             },
             {
               "title": "Record startup lights, display behavior, and beep codes"
@@ -170,6 +194,9 @@
             },
             {
               "title": "Test with only essential parts connected when appropriate"
+            },
+            {
+              "title": "For severe or unknown-cause failures, use the out-of-case test"
             },
             {
               "title": "Record which parts and connections were ruled out"
@@ -292,6 +319,9 @@
           "steps": [
             {
               "title": "Record the CPU model and firmware-reported settings"
+            },
+            {
+              "title": "Inspect the socket and CPU for visible damage if removal is needed"
             },
             {
               "title": "Check cooler operation and idle temperature"
@@ -536,6 +566,196 @@
             },
             {
               "title": "Record activation, file access, startup, and device tests"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "windows-reinstall",
+      "label": "Windows Reimage / Reinstall",
+      "order": 72,
+      "services": {
+        "repair": {
+          "description": "We’ll reinstall or reimage Windows when repair is not practical.",
+          "steps": [
+            {
+              "title": "Confirm customer approval, license, and that data loss is understood"
+            },
+            {
+              "title": "Back up or clone the drive (for example with Clonezilla) and verify the image"
+            },
+            {
+              "title": "Verify recovery-key access before changing encrypted storage"
+            },
+            {
+              "title": "Choose and record the method: reset, clean reinstall, or restore image"
+            },
+            {
+              "title": "Install drivers, updates, and approved software"
+            },
+            {
+              "title": "Restore approved data and record activation, startup, and device results"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "windows-maintenance",
+      "label": "Windows Maintenance and Virtual Memory",
+      "order": 73,
+      "services": {
+        "maintenance": {
+          "description": "We’ll tune Windows settings such as the page file and startup load.",
+          "steps": [
+            {
+              "title": "Record installed RAM, free disk space, and memory-related symptoms"
+            },
+            {
+              "title": "Check page file (virtual memory) size and location; restore system-managed sizing if altered"
+            },
+            {
+              "title": "Review startup programs, pending updates, and disk cleanup needs"
+            },
+            {
+              "title": "Record settings changed and before-and-after behavior"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "liquid-damage",
+      "label": "Liquid / Contamination Damage",
+      "order": 74,
+      "services": {
+        "diagnostic": {
+          "description": "We’ll assess liquid or contamination damage and which components may survive.",
+          "steps": [
+            {
+              "title": "Record the liquid type, when it happened, and what was done since"
+            },
+            {
+              "title": "Keep the system unpowered and disconnect external power"
+            },
+            {
+              "title": "Check for residue, corrosion, and affected areas"
+            },
+            {
+              "title": "Inspect each component for contamination and corrosion"
+            },
+            {
+              "title": "Annotate what is cleanable, needs replacement, or if the system is unrecoverable"
+            }
+          ]
+        },
+        "repair": {
+          "description": "We’ll clean contaminated components one by one and replace those that cannot be saved.",
+          "steps": [
+            {
+              "title": "Confirm approved scope and that success is not guaranteed"
+            },
+            {
+              "title": "Remove components and clean each with appropriate solution, then dry fully"
+            },
+            {
+              "title": "Replace components that are corroded or fail testing"
+            },
+            {
+              "title": "Reassemble and test each component, then the whole system"
+            },
+            {
+              "title": "Record parts cleaned, replaced, and remaining risk of delayed corrosion"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "collateral-damage",
+      "label": "Cascading / Collateral Damage",
+      "order": 75,
+      "services": {
+        "diagnostic": {
+          "description": "After a primary fault, we’ll check what else it damaged.",
+          "steps": [
+            {
+              "title": "Record the primary fault and how it was confirmed"
+            },
+            {
+              "title": "Test every other component using known-good parts or a bench setup"
+            },
+            {
+              "title": "Record each component as damaged, good, or untested"
+            },
+            {
+              "title": "Quote the full scope and explain the effect on cost to the customer"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "physical-damage",
+      "label": "Physical / Mechanical Damage",
+      "order": 76,
+      "services": {
+        "diagnostic": {
+          "description": "We’ll assess bent pins, broken parts, and other physical damage.",
+          "steps": [
+            {
+              "title": "Annotate the damage, including bent or missing socket pins"
+            },
+            {
+              "title": "Record whether the damaged part is repairable or must be replaced"
+            },
+            {
+              "title": "Check whether the cause damaged other parts"
+            },
+            {
+              "title": "Quote the revised scope and risks before continuing"
+            }
+          ]
+        },
+        "repair": {
+          "description": "We’ll repair or replace physically damaged parts with customer approval.",
+          "steps": [
+            {
+              "title": "Confirm approval and the risk of further damage"
+            },
+            {
+              "title": "Attempt pin straightening only when approved; otherwise replace the part"
+            },
+            {
+              "title": "Record the original and replacement part details"
+            },
+            {
+              "title": "Test startup and the affected components"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "out-of-case-test",
+      "label": "Out-of-Case Test (Severe / Unknown Cause)",
+      "order": 77,
+      "services": {
+        "diagnostic": {
+          "description": "We’ll test essential parts outside the case to isolate severe or unknown failures.",
+          "steps": [
+            {
+              "title": "Set up on a safe, nonconductive surface with known-good power"
+            },
+            {
+              "title": "Connect only one part from customer PC at a time, use all other known good test parts"
+            },
+            {
+              "title": "Record startup result, then add one part at a time"
+            },
+            {
+              "title": "Record which part or connection causes failure"
             }
           ]
         }
@@ -1195,6 +1415,172 @@
       }
     },
     {
+      "id": "windows-reinstall",
+      "label": "Windows Reimage / Reinstall",
+      "order": 72,
+      "services": {
+        "repair": {
+          "description": "We’ll reinstall or reimage Windows when repair is not practical.",
+          "steps": [
+            {
+              "title": "Confirm customer approval, license, and that data loss is understood"
+            },
+            {
+              "title": "Back up or clone the drive (for example with Clonezilla) and verify the image (if requested)"
+            },
+            {
+              "title": "Verify recovery-key access before changing encrypted storage"
+            },
+            {
+              "title": "Choose and record the method: reset, clean reinstall, or restore image"
+            },
+            {
+              "title": "Install laptop drivers, updates, and approved software"
+            },
+            {
+              "title": "Restore approved data and record activation, startup, and device results"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "windows-maintenance",
+      "label": "Windows Maintenance and Virtual Memory",
+      "order": 73,
+      "services": {
+        "maintenance": {
+          "description": "We’ll tune Windows settings such as the page file and startup load.",
+          "steps": [
+            {
+              "title": "Record installed RAM, free disk space, and memory-related symptoms"
+            },
+            {
+              "title": "Check page file (virtual memory) size and location; restore system-managed sizing if altered"
+            },
+            {
+              "title": "Review startup programs, pending updates, and disk cleanup needs"
+            },
+            {
+              "title": "Record settings changed and before-and-after behavior"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "liquid-damage",
+      "label": "Liquid / Contamination Damage",
+      "order": 74,
+      "services": {
+        "diagnostic": {
+          "description": "We’ll assess liquid or contamination damage and which components may survive.",
+          "steps": [
+            {
+              "title": "Record the liquid type, when it happened, and what was done since"
+            },
+            {
+              "title": "Keep the laptop off, unplugged, and disconnect the internal battery"
+            },
+            {
+              "title": "Photograph residue, corrosion, and affected areas"
+            },
+            {
+              "title": "Inspect mainboard, keyboard, ports, battery, and display cable for contamination"
+            },
+            {
+              "title": "Annotate what is cleanable, needs replacement, or if the system is unrecoverable"
+            }
+          ]
+        },
+        "repair": {
+          "description": "We’ll clean contaminated parts one by one and replace those that cannot be saved.",
+          "steps": [
+            {
+              "title": "Confirm approved scope and that success is not guaranteed"
+            },
+            {
+              "title": "Disconnect the internal battery, remove parts, clean each, and dry fully"
+            },
+            {
+              "title": "Replace parts that are corroded or fail testing"
+            },
+            {
+              "title": "Reassemble and test each function, then the whole laptop"
+            },
+            {
+              "title": "Record parts cleaned, replaced, and remaining risk of delayed corrosion"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "collateral-damage",
+      "label": "Cascading / Collateral Damage",
+      "order": 75,
+      "services": {
+        "diagnostic": {
+          "description": "After a primary fault, we’ll check what else it damaged.",
+          "steps": [
+            {
+              "title": "Record the primary fault and how it was confirmed"
+            },
+            {
+              "title": "Test charger, battery, storage, RAM, display, and ports for related damage"
+            },
+            {
+              "title": "Record each component as damaged, good, or untested"
+            },
+            {
+              "title": "Quote the full scope and explain the effect on cost to the customer"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "physical-damage",
+      "label": "Physical / Mechanical Damage",
+      "order": 76,
+      "services": {
+        "diagnostic": {
+          "description": "We’ll assess cracks, bent connectors, and other physical damage.",
+          "steps": [
+            {
+              "title": "Photograph the damage, including bent or broken connectors and pins"
+            },
+            {
+              "title": "Record whether the damaged part is repairable or must be replaced"
+            },
+            {
+              "title": "Check whether the cause damaged other parts"
+            },
+            {
+              "title": "Quote the revised scope and risks before continuing"
+            }
+          ]
+        },
+        "repair": {
+          "description": "We’ll repair or replace physically damaged parts with customer approval.",
+          "steps": [
+            {
+              "title": "Confirm approval and the risk of further damage"
+            },
+            {
+              "title": "Disconnect the internal battery before internal work"
+            },
+            {
+              "title": "Record the original and replacement part details"
+            },
+            {
+              "title": "Test startup and the affected components"
+            }
+          ]
+        }
+      }
+    },
+    {
       "id": "cooling-fans",
       "label": "Cooling and Fans",
       "order": 80,
@@ -1545,6 +1931,22 @@
   ],
   "desktopOptionalTools": [
     {
+      "id": "ram-test-board",
+      "label": "RAM Test Board",
+      "description": "Lit slot indicators show connection quality; dim or off means poor contact.",
+      "step": "Record each slot's indicator state (bright, dim, off) and the RAM connection conclusion",
+      "deviceType": "desktop",
+      "serviceTypes": ["diagnostic", "repair", "upgrade"]
+    },
+    {
+      "id": "clonezilla",
+      "label": "Clonezilla",
+      "description": "Clone or image a drive for backup, migration, or reimaging.",
+      "step": "Record source and target drives, clone or image mode, and verification result",
+      "deviceType": "desktop",
+      "serviceTypes": ["repair", "upgrade"]
+    },
+    {
       "id": "psu-tester",
       "label": "Power Supply Tester",
       "description": "Record the tester result without opening the power supply.",
@@ -1571,7 +1973,7 @@
     {
       "id": "breadboard-test",
       "label": "Out-of-Case Test",
-      "description": "Test essential desktop parts on a safe, nonconductive surface.",
+      "description": "Primary method for severe or unknown-cause failures; also available as a diagnostic component. Use a safe, nonconductive surface.",
       "step": "Record connected parts and startup result",
       "deviceType": "desktop",
       "serviceTypes": ["diagnostic", "repair"]
@@ -1634,6 +2036,14 @@
     }
   ],
   "laptopOptionalTools": [
+    {
+      "id": "clonezilla",
+      "label": "Clonezilla",
+      "description": "Clone or image a drive for backup, migration, or reimaging.",
+      "step": "Record source and target drives, clone or image mode, and verification result",
+      "deviceType": "laptop",
+      "serviceTypes": ["repair", "upgrade"]
+    },
     {
       "id": "battery-report",
       "label": "Battery Report",
