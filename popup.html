@@ -14,6 +14,23 @@
           <p class="eyebrow">TECHBAY / WORK MATE</p>
           <h1>Order assistant</h1>
         </div>
+        <span
+          class="connection"
+          id="connection"
+          aria-label="Checking active tab"
+        >
+          <span class="connection-dot"></span>
+        </span>
+        <button class="reset-button" id="reset-button" type="button">
+          Reset
+        </button>
+      </header>
+
+      <div class="order-strip">
+        <div class="order-info">
+          <span class="order-label">ACTIVE ORDER</span>
+          <span class="order-number" id="order-number">No order detected</span>
+        </div>
         <label class="field initials-control">
           <span>Initials</span>
           <input
@@ -36,18 +53,6 @@
             <option value="white">White</option>
           </select>
         </label>
-        <span
-          class="connection"
-          id="connection"
-          aria-label="Checking active tab"
-        >
-          <span class="connection-dot"></span>
-        </span>
-      </header>
-
-      <div class="order-strip">
-        <span class="order-label">ACTIVE ORDER</span>
-        <span class="order-number" id="order-number">No order detected</span>
       </div>
 
       <form id="order-form">

@@ -20,9 +20,9 @@
 }
 
 body {
-  width: 420px;
-  min-height: 560px;
-  max-height: 760px;
+  width: 640px;
+  min-height: 520px;
+  max-height: 600px;
   overflow-y: auto;
   margin: 0;
   background:
@@ -50,7 +50,7 @@ textarea {
 }
 
 .popup-shell {
-  padding: 20px 20px 15px;
+  padding: 18px 22px 14px;
 }
 .topbar {
   display: flex;
@@ -152,12 +152,21 @@ h1 {
 
 .order-strip {
   display: flex;
-  align-items: baseline;
+  align-items: center;
   gap: 10px;
-  margin: 17px 0 15px;
+  margin: 16px 0 16px;
   padding: 10px 12px;
   border-left: 2px solid var(--acid);
   background: var(--panel);
+}
+.order-info {
+  display: grid;
+  min-width: 0;
+  flex: 1;
+  gap: 3px;
+}
+.order-strip .initials-control {
+  flex: 0 0 52px;
 }
 .order-number {
   overflow: hidden;
@@ -168,13 +177,13 @@ h1 {
 }
 .tabs {
   display: grid;
-  grid-template-columns: 0.8fr 1.45fr 1fr;
+  grid-template-columns: 1fr 1fr;
   gap: 4px;
   border-bottom: 1px solid var(--line);
   padding-bottom: 7px;
 }
 .tab {
-  min-height: 34px;
+  min-height: 38px;
   border: 1px solid transparent;
   border-radius: 3px;
   padding: 5px 4px;
@@ -307,7 +316,7 @@ h2 {
   font-size: 8px;
 }
 .note-preview pre {
-  max-height: 180px;
+  max-height: 240px;
   overflow: auto;
   margin: 0;
   color: var(--muted);
@@ -472,6 +481,21 @@ h2 {
 }
 .apply-button span:last-child {
   font-size: 17px;
+}
+.reset-button {
+  min-height: 29px;
+  border: 1px solid var(--line);
+  border-radius: 3px;
+  padding: 0 10px;
+  background: transparent;
+  color: var(--muted);
+  font-size: 10px;
+  font-weight: 700;
+  cursor: pointer;
+}
+.reset-button:hover {
+  border-color: var(--orange);
+  color: var(--orange);
 }
 .status {
   min-height: 31px;

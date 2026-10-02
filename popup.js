@@ -200,7 +200,6 @@ function renderPlanResponses() {
     title.textContent = `${item.label} · What you did and found`;
     const guide = document.createElement("details");
     guide.className = "step-guide";
-    guide.open = true;
     const guideSummary = document.createElement("summary");
     guideSummary.textContent = item.steps
       ? "Suggested steps"
@@ -228,7 +227,7 @@ function renderPlanResponses() {
     textarea.rows = 3;
     textarea.value = planResponses[item.id] || "";
     textarea.placeholder =
-      "One line per action, past tense. Example: Pulled RAM; test RAM in; no post, DRAM light on";
+      "One line per action, past tense. Example: \nPulled RAM; \nTest RAM in; \nNo post, \nDRAM light on";
     textarea.addEventListener("input", () => {
       planResponses[item.id] = textarea.value;
       saveDraft();
@@ -438,6 +437,23 @@ initialsInput.addEventListener("change", () => saveDraft(true));
 initialsInput.addEventListener("blur", () => saveDraft(true));
 form.addEventListener("focusout", () => saveDraft(true));
 window.addEventListener("pagehide", () => saveDraft(true));
+
+document.querySelector("#reset-button").addEventListener("click", async () => {
+  if (!window.confirm("Clear saved work-order data and start fresh?")) return;
+  clearTimeout(draftSaveTimer);
+  const initials = initialsInput.value;
+  await chrome.storage.local.remove(DRAFT_KEY);
+  form.reset();
+  initialsInput.value = initials;
+  selectedOptions.clear();
+  selectedTools.clear();
+  for (const key of Object.keys(planResponses)) delete planResponses[key];
+  form.elements.workDate.value = todayLabel();
+  form.elements.esd.value = todayLabel();
+  updateServiceTypeOptions();
+  renderServices();
+  showStatus("Saved data cleared.", "success");
+});
 
 document.querySelectorAll(".tab").forEach((tab) => {
   tab.addEventListener("click", () => {
