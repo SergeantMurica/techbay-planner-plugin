@@ -93,7 +93,7 @@
               <span>WORK ORDER FIELDS</span>
             </div>
 
-            <div class="field-row">
+            <div class="grid grid-3">
               <label class="field">
                 <span>Device</span>
                 <select name="device">
@@ -113,16 +113,24 @@
                   <option value="3">3</option>
                 </select>
               </label>
+              <label class="field">
+                <span>S2S</span>
+                <select name="s2s">
+                  <option value="">Not set</option>
+                  <option value="Yes">Yes</option>
+                  <option value="No">No</option>
+                </select>
+              </label>
             </div>
-            <label class="field">
-              <span>Make / Model</span>
-              <input
-                name="makeModel"
-                autocomplete="off"
-                placeholder="Brand and model"
-              />
-            </label>
-            <div class="field-row">
+            <div class="grid grid-4">
+              <label class="field span-2">
+                <span>Make / Model</span>
+                <input
+                  name="makeModel"
+                  autocomplete="off"
+                  placeholder="Brand and model"
+                />
+              </label>
               <label class="field">
                 <span>Serial</span>
                 <input name="serial" autocomplete="off" />
@@ -132,50 +140,62 @@
                 <input name="pin" autocomplete="off" />
               </label>
             </div>
-            <label class="field">
-              <span>Check-in date</span>
-              <input name="workDate" autocomplete="off" />
-            </label>
-            <label class="field">
-              <span>ESD date</span>
-              <input name="esd" autocomplete="off" />
-            </label>
-            <fieldset class="choice-group">
-              <legend>Reimage / Wipe</legend>
-              <label class="choice"
-                ><input type="radio" name="reimage" value="yes" /><span
-                  >Yes</span
-                ></label
-              >
-              <label class="choice"
-                ><input type="radio" name="reimage" value="no" /><span
-                  >No</span
-                ></label
-              >
-              <label class="choice"
-                ><input type="radio" name="reimage" value="call" /><span
-                  >Call Me First</span
-                ></label
-              >
-            </fieldset>
-            <fieldset class="choice-group">
-              <legend>Back-up</legend>
-              <label class="choice"
-                ><input type="radio" name="backup" value="yes" /><span
-                  >Yes</span
-                ></label
-              >
-              <label class="choice"
-                ><input type="radio" name="backup" value="no" /><span
-                  >No</span
-                ></label
-              >
-            </fieldset>
+            <div class="grid grid-3">
+              <label class="field">
+                <span>Check-in date</span>
+                <input name="workDate" autocomplete="off" />
+              </label>
+              <label class="field">
+                <span>ESD date</span>
+                <input name="esd" autocomplete="off" />
+              </label>
+              <label class="field">
+                <span>Image URL</span>
+                <input
+                  name="image"
+                  autocomplete="off"
+                  placeholder="Optional image link"
+                />
+              </label>
+            </div>
+            <div class="grid grid-2">
+              <fieldset class="choice-group">
+                <legend>Reimage / Wipe</legend>
+                <label class="choice"
+                  ><input type="radio" name="reimage" value="yes" /><span
+                    >Yes</span
+                  ></label
+                >
+                <label class="choice"
+                  ><input type="radio" name="reimage" value="no" /><span
+                    >No</span
+                  ></label
+                >
+                <label class="choice"
+                  ><input type="radio" name="reimage" value="call" /><span
+                    >Call Me First</span
+                  ></label
+                >
+              </fieldset>
+              <fieldset class="choice-group">
+                <legend>Back-up</legend>
+                <label class="choice"
+                  ><input type="radio" name="backup" value="yes" /><span
+                    >Yes</span
+                  ></label
+                >
+                <label class="choice"
+                  ><input type="radio" name="backup" value="no" /><span
+                    >No</span
+                  ></label
+                >
+              </fieldset>
+            </div>
             <label class="field">
               <span>Issue(s)</span>
               <textarea
                 name="issues"
-                rows="3"
+                rows="4"
                 placeholder="Customer complaint or requested service"
               ></textarea>
             </label>
@@ -186,32 +206,6 @@
               </div>
               <pre id="checkin-preview"></pre>
             </div>
-            <div class="field-row">
-              <label class="field">
-                <span>S2S</span>
-                <select name="s2s">
-                  <option value="">Not set</option>
-                  <option value="Yes">Yes</option>
-                  <option value="No">No</option>
-                </select>
-              </label>
-            </div>
-            <label class="field">
-              <span>Image URL</span>
-              <input
-                name="image"
-                autocomplete="off"
-                placeholder="Optional image link"
-              />
-            </label>
-            <label class="field">
-              <span>Daily update</span>
-              <textarea
-                name="dailyUpdate"
-                rows="3"
-                placeholder="Customer-facing work-order update"
-              ></textarea>
-            </label>
           </section>
         </div>
 
@@ -227,27 +221,29 @@
               <h2>Choose this service</h2>
               <span id="service-count">0 selected</span>
             </div>
-            <label class="field"
-              ><span>Service</span
-              ><select name="serviceType">
-                <option value="diagnostic">Diagnostic</option>
-                <option value="repair">Repair</option>
-                <option value="upgrade">Upgrade</option>
-              </select></label
-            >
-            <label class="field"
-              ><span>Add service plan</span
-              ><select id="service-option">
-                <option value="">Choose a category...</option>
-              </select></label
-            >
+            <div class="grid grid-3">
+              <label class="field"
+                ><span>Service</span
+                ><select name="serviceType">
+                  <option value="diagnostic">Diagnostic</option>
+                  <option value="repair">Repair</option>
+                  <option value="upgrade">Upgrade</option>
+                </select></label
+              >
+              <label class="field"
+                ><span>Add service plan</span
+                ><select id="service-option">
+                  <option value="">Choose a category...</option>
+                </select></label
+              >
+              <label class="field"
+                ><span>Add optional tool</span
+                ><select id="optional-tool">
+                  <option value="">Choose a tool...</option>
+                </select></label
+              >
+            </div>
             <div id="selected-options" class="selected-list"></div>
-            <label class="field"
-              ><span>Add optional tool</span
-              ><select id="optional-tool">
-                <option value="">Choose a tool...</option>
-              </select></label
-            >
             <div id="selected-tools" class="selected-list"></div>
             <div id="plan-responses" class="plan-responses"></div>
             <div class="note-preview">

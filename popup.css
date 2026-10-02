@@ -19,6 +19,10 @@
   box-sizing: border-box;
 }
 
+html {
+  width: 640px;
+}
+
 body {
   width: 640px;
   min-height: 520px;
@@ -189,7 +193,7 @@ h1 {
   padding: 5px 4px;
   background: transparent;
   color: var(--muted);
-  font-size: 10px;
+  font-size: 12px;
   font-weight: 700;
   cursor: pointer;
 }
@@ -212,7 +216,7 @@ form {
 }
 .section-block {
   display: grid;
-  gap: 9px;
+  gap: 14px;
 }
 .section-heading {
   display: flex;
@@ -234,7 +238,7 @@ h2 {
 }
 .field > span {
   color: var(--muted);
-  font-size: 10px;
+  font-size: 11px;
   font-weight: 600;
 }
 .field input,
@@ -294,6 +298,29 @@ h2 {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 9px;
+}
+.grid {
+  display: grid;
+  gap: 12px;
+}
+.grid-2 {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+.grid-3 {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+.grid-4 {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+.span-2 {
+  grid-column: span 2;
+}
+.grid .choice-group {
+  align-content: center;
+  min-height: 50px;
+}
+.field textarea {
+  line-height: 1.4;
 }
 
 .note-preview {
@@ -369,11 +396,16 @@ h2 {
 }
 .plan-responses {
   display: grid;
-  gap: 8px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
 }
 .response-field {
+  align-content: start;
   border-left: 2px solid var(--acid);
-  padding-left: 8px;
+  padding-left: 10px;
+}
+.response-field textarea {
+  min-height: 110px;
 }
 .qc-checklist {
   display: grid;
@@ -515,14 +547,4 @@ footer {
   padding-top: 10px;
   color: var(--muted);
   font-size: 9px;
-}
-
-@media (max-width: 400px) {
-  body {
-    width: 360px;
-  }
-  .popup-shell {
-    padding-right: 14px;
-    padding-left: 14px;
-  }
 }

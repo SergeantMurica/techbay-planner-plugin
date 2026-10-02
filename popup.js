@@ -260,11 +260,8 @@ function toBullets(text) {
     .map((line) => `-${line}`);
 }
 
-function formatDailyUpdate(text) {
-  const update = text.trim();
-  if (!update) return "";
-  const initials = initialsInput.value.trim() || "__";
-  return `${todayLabel()} ${initials} - ${update}`;
+function formatDailyUpdate() {
+  return `${noteHeader()} - Checked In`;
 }
 
 function getCheckInNote() {
@@ -518,7 +515,7 @@ form.addEventListener("submit", async (event) => {
   for (const [name, value] of Object.entries(formValues)) {
     if (checkInFieldNames.has(name)) values[name] = value;
   }
-  values.dailyUpdate = formatDailyUpdate(formValues.dailyUpdate || "");
+  values.dailyUpdate = formatDailyUpdate();
   values.checkInNote = getCheckInNote();
 
   try {
