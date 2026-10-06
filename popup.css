@@ -323,6 +323,34 @@ h2 {
   line-height: 1.4;
 }
 
+.voice-controls {
+  display: flex;
+  min-height: 26px;
+  align-items: center;
+  gap: 7px;
+}
+
+.voice-button {
+  min-height: 25px;
+  border: 1px solid var(--line);
+  border-radius: 3px;
+  padding: 0 7px;
+  background: var(--panel);
+  color: var(--ink);
+  font-size: 10px;
+  font-weight: 700;
+}
+
+.voice-button:hover,
+.voice-button[aria-pressed="true"] {
+  border-color: var(--acid);
+}
+
+.voice-message {
+  color: var(--muted);
+  font-size: 9px;
+}
+
 .note-preview {
   min-width: 0;
   border: 1px solid var(--line);
@@ -403,6 +431,12 @@ h2 {
   align-content: start;
   border-left: 2px solid var(--acid);
   padding-left: 10px;
+}
+.assumed-issues-field {
+  grid-column: 1 / -1;
+}
+.combined-response-field {
+  grid-column: 1 / -1;
 }
 .response-field textarea {
   min-height: 110px;

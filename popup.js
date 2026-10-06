@@ -24,6 +24,8 @@ const optionalTool = document.querySelector("#optional-tool");
 const selectedOptionsNode = document.querySelector("#selected-options");
 const selectedToolsNode = document.querySelector("#selected-tools");
 const planResponsesNode = document.querySelector("#plan-responses");
+let activeRecognition;
+let activeDictationButton;
 const selectedOptions = new Set();
 const selectedTools = new Set();
 const planResponses = {};
@@ -140,6 +142,146 @@ function addChoiceChip(container, item, set, onRemove) {
   set.add(item.id);
 }
 
+function addDictationControl(container, textarea) {
+  const controls = document.createElement("div");
+  controls.className = "voice-controls";
+  const button = document.createElement("button");
+  button.className = "voice-button";
+  button.type = "button";
+  button.textContent = "Start dictation";
+  button.setAttribute("aria-pressed", "false");
+  const message = document.createElement("span");
+  message.className = "voice-message";
+  message.setAttribute("aria-live", "polite");
+  controls.append(button, message);
+  container.append(controls);
+
+  button.addEventListener("click", async () => {
+    if (activeRecognition && activeDictationButton === button) {
+      activeRecognition.stop();
+      return;
+    }
+
+    if (activeRecognition) activeRecognition.stop();
+    const Recognition =
+      window.SpeechRecognition || window.webkitSpeechRecognition;
+    if (!Recognition) {
+      message.textContent = "Voice input is not supported in this browser.";
+      return;
+    }
+
+    if (!navigator.mediaDevices?.getUserMedia) {
+      message.textContent = "Microphone access is unavailable in this context.";
+      return;
+    }
+
+    button.disabled = true;
+    button.textContent = "Requesting microphone...";
+    message.textContent = "Allow microphone access in Chrome to continue.";
+    try {
+      const audioStream = await navigator.mediaDevices.getUserMedia({
+        audio: true,
+      });
+      audioStream.getTracks().forEach((track) => track.stop());
+    } catch (error) {
+      const errorName = error instanceof Error ? error.name : "";
+      message.textContent =
+        errorName === "NotAllowedError" || errorName === "SecurityError"
+          ? "Microphone permission denied. Allow access for the extension in Chrome."
+          : errorName === "NotFoundError"
+            ? "No microphone found. Check your input device."
+            : `Could not access the microphone${errorName ? `: ${errorName}` : "."}`;
+      button.disabled = false;
+      button.textContent = "Start dictation";
+      return;
+    }
+    button.disabled = false;
+
+    const recognition = new Recognition();
+    recognition.continuous = true;
+    recognition.interimResults = true;
+    recognition.lang = "en-US";
+    let pendingTranscript = "";
+    recognition.onresult = (event) => {
+      const results = Array.from(event.results).slice(event.resultIndex);
+      const transcript = results
+        .filter((result) => result.isFinal)
+        .map((result) => result[0].transcript.trim())
+        .filter(Boolean)
+        .join(" ");
+      const interimTranscript = results
+        .filter((result) => !result.isFinal)
+        .map((result) => result[0].transcript.trim())
+        .filter(Boolean)
+        .join(" ");
+
+      if (transcript) {
+        textarea.value = `${textarea.value}${textarea.value ? "\n" : ""}${transcript}`;
+        textarea.dispatchEvent(new Event("input", { bubbles: true }));
+        pendingTranscript = "";
+        message.textContent = "Text added to note.";
+      }
+      if (interimTranscript) {
+        pendingTranscript = interimTranscript;
+        message.textContent = `Hearing: ${interimTranscript}`;
+      }
+    };
+    recognition.onerror = (event) => {
+      const errorMessages = {
+        "not-allowed":
+          "Microphone permission denied. Check Chrome site settings.",
+        "service-not-allowed": "Chrome blocked the speech recognition service.",
+        "audio-capture": "No microphone detected. Check your input device.",
+        "no-speech": "No speech detected. Try again and check your mic.",
+        network: "Speech service network error. Check your connection.",
+        aborted: "Dictation stopped.",
+      };
+      message.textContent =
+        errorMessages[event.error] ||
+        `Speech recognition error: ${event.error}`;
+      button.textContent = "Start dictation";
+      button.setAttribute("aria-pressed", "false");
+      activeRecognition = undefined;
+      activeDictationButton = undefined;
+    };
+    recognition.onend = () => {
+      if (pendingTranscript) {
+        textarea.value = `${textarea.value}${textarea.value ? "\n" : ""}${pendingTranscript}`;
+        textarea.dispatchEvent(new Event("input", { bubbles: true }));
+        pendingTranscript = "";
+        message.textContent = "Partial text added to note. Please review it.";
+      } else if (message.textContent === "Listening...") {
+        message.textContent =
+          "No transcript received. Check microphone permission and connection.";
+      } else if (message.textContent.startsWith("Hearing:")) {
+        message.textContent =
+          "Speech heard, but no final text arrived. Check the speech service connection.";
+      }
+      button.textContent = "Start dictation";
+      button.setAttribute("aria-pressed", "false");
+      if (activeRecognition === recognition) {
+        activeRecognition = undefined;
+        activeDictationButton = undefined;
+      }
+    };
+
+    message.textContent = "Listening...";
+    button.textContent = "Stop dictation";
+    button.setAttribute("aria-pressed", "true");
+    activeRecognition = recognition;
+    activeDictationButton = button;
+    try {
+      recognition.start();
+    } catch {
+      message.textContent = "Could not start voice input.";
+      button.textContent = "Start dictation";
+      button.setAttribute("aria-pressed", "false");
+      activeRecognition = undefined;
+      activeDictationButton = undefined;
+    }
+  });
+}
+
 function renderServices() {
   const plans = activePlans();
   const tools = activeTools();
@@ -193,47 +335,77 @@ function renderPlanResponses() {
   planResponsesNode.replaceChildren();
   const plans = activePlans().filter((plan) => selectedOptions.has(plan.id));
   const tools = activeTools().filter((tool) => selectedTools.has(tool.id));
-  for (const item of [...plans, ...tools]) {
-    const label = document.createElement("div");
-    label.className = "field response-field";
+  const items = [...plans, ...tools];
+
+  if (!Object.hasOwn(planResponses, "assumedIssues")) {
+    planResponses.assumedIssues = items
+      .map((item) => {
+        const why = (planResponses[`${item.id}:why`] || "").trim();
+        return why ? `${item.label}: ${why}` : "";
+      })
+      .filter(Boolean)
+      .join("\n");
+  }
+
+  if (items.length) {
+    const field = document.createElement("label");
+    field.className = "field assumed-issues-field";
     const title = document.createElement("span");
-    title.textContent = `${item.label} · What you did and found`;
+    title.textContent = "Assumed issue(s)";
+    const textarea = document.createElement("textarea");
+    textarea.rows = 3;
+    textarea.value = planResponses.assumedIssues;
+    textarea.placeholder = "Enter all assumed issues, one per line.";
+    textarea.addEventListener("input", () => {
+      planResponses.assumedIssues = textarea.value;
+      saveDraft();
+      updatePreviews();
+    });
+    field.append(title, textarea);
+    addDictationControl(field, textarea);
+    planResponsesNode.append(field);
+  }
+
+  if (!Object.hasOwn(planResponses, "combinedNotes")) {
+    planResponses.combinedNotes = items
+      .map((item) => (planResponses[item.id] || "").trim())
+      .filter(Boolean)
+      .join("\n");
+  }
+
+  if (items.length) {
+    const label = document.createElement("div");
+    label.className = "field response-field combined-response-field";
+    const title = document.createElement("span");
+    title.textContent = `${items.map((item) => item.label).join(", ")} · What you did and found`;
     const guide = document.createElement("details");
     guide.className = "step-guide";
     const guideSummary = document.createElement("summary");
-    guideSummary.textContent = item.steps
-      ? "Suggested steps"
-      : "Suggested step";
+    guideSummary.textContent = "Suggested steps";
     const guideList = document.createElement("ol");
-    for (const text of item.steps
-      ? item.steps.map((step) => step.title)
-      : [item.step]) {
-      const entry = document.createElement("li");
-      entry.textContent = text;
-      guideList.append(entry);
+    for (const item of items) {
+      const steps = item.steps
+        ? item.steps.map((step) => step.title)
+        : [item.step];
+      for (const step of steps) {
+        const entry = document.createElement("li");
+        entry.textContent = `${item.label}: ${step}`;
+        guideList.append(entry);
+      }
     }
     guide.append(guideSummary, guideList);
-    const why = document.createElement("input");
-    why.className = "why-input";
-    why.autocomplete = "off";
-    why.value = planResponses[`${item.id}:why`] || "";
-    why.placeholder = "Why are we checking this? (optional)";
-    why.addEventListener("input", () => {
-      planResponses[`${item.id}:why`] = why.value;
-      saveDraft();
-      updatePreviews();
-    });
     const textarea = document.createElement("textarea");
-    textarea.rows = 3;
-    textarea.value = planResponses[item.id] || "";
+    textarea.rows = 5;
+    textarea.value = planResponses.combinedNotes;
     textarea.placeholder =
       "One line per action, past tense. Example: \nPulled RAM; \nTest RAM in; \nNo post, \nDRAM light on";
     textarea.addEventListener("input", () => {
-      planResponses[item.id] = textarea.value;
+      planResponses.combinedNotes = textarea.value;
       saveDraft();
       updatePreviews();
     });
-    label.append(title, guide, why, textarea);
+    label.append(title, guide, textarea);
+    addDictationControl(label, textarea);
     planResponsesNode.append(label);
   }
 }
@@ -241,6 +413,11 @@ function renderPlanResponses() {
 function checkedValue(name) {
   return form.querySelector(`input[name="${name}"]:checked`)?.value || "";
 }
+
+addDictationControl(
+  form.elements.issues.closest(".field"),
+  form.elements.issues,
+);
 
 function mark(value, expected) {
   return value === expected ? "X" : " ";
@@ -285,11 +462,17 @@ function getCheckInNote() {
 function getServiceNote() {
   const plans = activePlans().filter((plan) => selectedOptions.has(plan.id));
   const tools = activeTools().filter((tool) => selectedTools.has(tool.id));
+  const items = [...plans, ...tools];
   const lines = [noteHeader()];
-  for (const item of [...plans, ...tools]) {
-    const why = (planResponses[`${item.id}:why`] || "").trim();
-    lines.push("", `${item.label}${why ? ` (${why})` : ""}:`);
-    lines.push(...toBullets(planResponses[item.id] || ""));
+  const assumptions = toBullets(planResponses.assumedIssues || "");
+
+  if (assumptions.length) {
+    lines.push("", "Assumed issue(s):", ...assumptions);
+  }
+
+  if (items.length) {
+    lines.push("", `${items.map((item) => item.label).join(", ")}:`);
+    lines.push(...toBullets(planResponses.combinedNotes || ""));
   }
   if (lines.length === 1) lines.push("-");
   return lines.join("\n");
