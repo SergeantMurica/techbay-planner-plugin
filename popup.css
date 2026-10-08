@@ -563,6 +563,45 @@ h2 {
   border-color: var(--orange);
   color: var(--orange);
 }
+.notes-bar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: -6px 0 14px;
+}
+.notes-select {
+  min-width: 0;
+  flex: 1;
+}
+.notes-select select {
+  width: 100%;
+  min-height: 29px;
+  border: 1px solid var(--line);
+  border-radius: 3px;
+  padding: 4px 6px;
+  background: var(--panel);
+  color: var(--ink);
+  font-size: 10px;
+}
+.notes-button {
+  min-height: 29px;
+  border: 1px solid var(--line);
+  border-radius: 3px;
+  padding: 0 10px;
+  background: transparent;
+  color: var(--ink);
+  font-size: 10px;
+  font-weight: 700;
+  white-space: nowrap;
+  cursor: pointer;
+}
+.notes-button:hover {
+  border-color: var(--acid);
+}
+#delete-note-button:hover {
+  border-color: var(--orange);
+  color: var(--orange);
+}
 .status {
   min-height: 31px;
   padding: 9px 0 3px;

@@ -7,6 +7,7 @@ import {
 import { DEFAULT_THEME, THEMES } from "./lib/themes.js";
 
 const DRAFT_KEY = "techbay-work-order-draft-v1";
+const NOTES_KEY = "techbay-work-order-notes-v1";
 const THEME_KEY = "techbay-tool-theme";
 const INITIALS_KEY = "techbay-technician-initials";
 const form = document.querySelector("#order-form");
@@ -16,6 +17,7 @@ const connection = document.querySelector("#connection");
 const submitLabel = document.querySelector("#submit-label");
 const initialsInput = document.querySelector('[name="checkInInitials"]');
 const themeSelect = document.querySelector("#theme-select");
+const notesSelect = document.querySelector("#note-select");
 themeSelect.replaceChildren(
   ...THEMES.map((theme) => new Option(theme.name, theme.id)),
 );
@@ -24,8 +26,7 @@ const optionalTool = document.querySelector("#optional-tool");
 const selectedOptionsNode = document.querySelector("#selected-options");
 const selectedToolsNode = document.querySelector("#selected-tools");
 const planResponsesNode = document.querySelector("#plan-responses");
-let activeRecognition;
-let activeDictationButton;
+let activeDictation;
 const selectedOptions = new Set();
 const selectedTools = new Set();
 const planResponses = {};
@@ -51,6 +52,9 @@ const checkInFieldNames = new Set([
 let activeTabId;
 let activeOrderNumber = "";
 let draftSaveTimer;
+const notes = {};
+const noteOrder = [];
+let activeNoteId = "";
 
 function todayLabel() {
   const date = new Date();
@@ -142,6 +146,23 @@ function addChoiceChip(container, item, set, onRemove) {
   set.add(item.id);
 }
 
+const LISTENING_MESSAGE = 'Listening... say "pause" or "end".';
+const PAUSED_MESSAGE = 'Paused. Say "unpause" to continue.';
+
+// Only a whole utterance counts, so "front end" in a note is never a command.
+function parseVoiceCommand(transcript) {
+  const spoken = transcript
+    .toLowerCase()
+    .replace(/[^a-z\s]/g, "")
+    .replace(/\s+/g, " ")
+    .trim();
+  if (spoken === "end") return "end";
+  if (spoken === "pause") return "pause";
+  if (["unpause", "un pause", "on pause", "resume"].includes(spoken))
+    return "unpause";
+  return "";
+}
+
 function addDictationControl(container, textarea) {
   const controls = document.createElement("div");
   controls.className = "voice-controls";
@@ -157,12 +178,12 @@ function addDictationControl(container, textarea) {
   container.append(controls);
 
   button.addEventListener("click", async () => {
-    if (activeRecognition && activeDictationButton === button) {
-      activeRecognition.stop();
+    if (activeDictation?.button === button) {
+      activeDictation.stop();
       return;
     }
 
-    if (activeRecognition) activeRecognition.stop();
+    activeDictation?.stop();
     const Recognition =
       window.SpeechRecognition || window.webkitSpeechRecognition;
     if (!Recognition) {
@@ -197,87 +218,124 @@ function addDictationControl(container, textarea) {
     }
     button.disabled = false;
 
-    const recognition = new Recognition();
-    recognition.continuous = true;
-    recognition.interimResults = true;
-    recognition.lang = "en-US";
+    let paused = false;
+    let stopped = false;
     let pendingTranscript = "";
-    recognition.onresult = (event) => {
-      const results = Array.from(event.results).slice(event.resultIndex);
-      const transcript = results
-        .filter((result) => result.isFinal)
-        .map((result) => result[0].transcript.trim())
-        .filter(Boolean)
-        .join(" ");
-      const interimTranscript = results
-        .filter((result) => !result.isFinal)
-        .map((result) => result[0].transcript.trim())
-        .filter(Boolean)
-        .join(" ");
-
-      if (transcript) {
-        textarea.value = `${textarea.value}${textarea.value ? "\n" : ""}${transcript}`;
-        textarea.dispatchEvent(new Event("input", { bubbles: true }));
-        pendingTranscript = "";
-        message.textContent = "Text added to note.";
-      }
-      if (interimTranscript) {
-        pendingTranscript = interimTranscript;
-        message.textContent = `Hearing: ${interimTranscript}`;
-      }
+    let recognition;
+    const session = {
+      button,
+      stop() {
+        stopped = true;
+        recognition?.stop();
+      },
     };
-    recognition.onerror = (event) => {
-      const errorMessages = {
-        "not-allowed":
-          "Microphone permission denied. Check Chrome site settings.",
-        "service-not-allowed": "Chrome blocked the speech recognition service.",
-        "audio-capture": "No microphone detected. Check your input device.",
-        "no-speech": "No speech detected. Try again and check your mic.",
-        network: "Speech service network error. Check your connection.",
-        aborted: "Dictation stopped.",
+
+    const appendText = (text) => {
+      textarea.value = `${textarea.value}${textarea.value ? "\n" : ""}${text}`;
+      textarea.dispatchEvent(new Event("input", { bubbles: true }));
+    };
+
+    const startRecognition = () => {
+      recognition = new Recognition();
+      recognition.continuous = true;
+      recognition.interimResults = true;
+      recognition.lang = "en-US";
+
+      recognition.onresult = (event) => {
+        let interim = "";
+        for (const result of Array.from(event.results).slice(
+          event.resultIndex,
+        )) {
+          const text = result[0].transcript.trim();
+          if (!text) continue;
+          if (!result.isFinal) {
+            interim = text;
+            continue;
+          }
+
+          pendingTranscript = "";
+          const command = parseVoiceCommand(text);
+          if (command === "end") {
+            message.textContent = "Dictation ended.";
+            session.stop();
+            return;
+          }
+          if (command === "pause") {
+            paused = true;
+            message.textContent = PAUSED_MESSAGE;
+            continue;
+          }
+          if (command === "unpause") {
+            paused = false;
+            message.textContent = LISTENING_MESSAGE;
+            continue;
+          }
+          if (!paused) {
+            appendText(text);
+            message.textContent = "Text added to note.";
+          }
+        }
+
+        if (interim && !paused) {
+          pendingTranscript = interim;
+          message.textContent = `Hearing: ${interim}`;
+        }
       };
-      message.textContent =
-        errorMessages[event.error] ||
-        `Speech recognition error: ${event.error}`;
-      button.textContent = "Start dictation";
-      button.setAttribute("aria-pressed", "false");
-      activeRecognition = undefined;
-      activeDictationButton = undefined;
-    };
-    recognition.onend = () => {
-      if (pendingTranscript) {
-        textarea.value = `${textarea.value}${textarea.value ? "\n" : ""}${pendingTranscript}`;
-        textarea.dispatchEvent(new Event("input", { bubbles: true }));
+
+      recognition.onerror = (event) => {
+        // Silence timeouts are expected; onend restarts the session.
+        if (event.error === "no-speech" || event.error === "aborted") return;
+        const errorMessages = {
+          "not-allowed":
+            "Microphone permission denied. Check Chrome site settings.",
+          "service-not-allowed":
+            "Chrome blocked the speech recognition service.",
+          "audio-capture": "No microphone detected. Check your input device.",
+          network: "Speech service network error. Check your connection.",
+        };
+        stopped = true;
+        message.textContent =
+          errorMessages[event.error] ||
+          `Speech recognition error: ${event.error}`;
+      };
+
+      recognition.onend = () => {
+        if (
+          pendingTranscript &&
+          !paused &&
+          !parseVoiceCommand(pendingTranscript)
+        )
+          appendText(pendingTranscript);
         pendingTranscript = "";
-        message.textContent = "Partial text added to note. Please review it.";
-      } else if (message.textContent === "Listening...") {
-        message.textContent =
-          "No transcript received. Check microphone permission and connection.";
-      } else if (message.textContent.startsWith("Hearing:")) {
-        message.textContent =
-          "Speech heard, but no final text arrived. Check the speech service connection.";
-      }
-      button.textContent = "Start dictation";
-      button.setAttribute("aria-pressed", "false");
-      if (activeRecognition === recognition) {
-        activeRecognition = undefined;
-        activeDictationButton = undefined;
-      }
+
+        if (!stopped) {
+          try {
+            startRecognition();
+            return;
+          } catch {
+            message.textContent = "Dictation stopped unexpectedly.";
+          }
+        }
+
+        button.textContent = "Start dictation";
+        button.setAttribute("aria-pressed", "false");
+        if (activeDictation === session) activeDictation = undefined;
+      };
+
+      recognition.start();
     };
 
-    message.textContent = "Listening...";
+    message.textContent = LISTENING_MESSAGE;
     button.textContent = "Stop dictation";
     button.setAttribute("aria-pressed", "true");
-    activeRecognition = recognition;
-    activeDictationButton = button;
+    activeDictation = session;
     try {
-      recognition.start();
+      startRecognition();
     } catch {
       message.textContent = "Could not start voice input.";
       button.textContent = "Start dictation";
       button.setAttribute("aria-pressed", "false");
-      activeRecognition = undefined;
-      activeDictationButton = undefined;
+      activeDictation = undefined;
     }
   });
 }
@@ -483,29 +541,101 @@ function updatePreviews() {
   document.querySelector("#service-preview").textContent = getServiceNote();
 }
 
+function noteLabel(id, index) {
+  const draft = notes[id] || {};
+  const title = (draft.makeModel || draft.issues || "")
+    .trim()
+    .replace(/\s+/g, " ")
+    .slice(0, 32);
+  return `${index + 1}. ${title || "New note"}`;
+}
+
+function renderNoteOptions() {
+  notesSelect.replaceChildren(
+    ...noteOrder.map((id, index) => new Option(noteLabel(id, index), id)),
+  );
+  notesSelect.value = activeNoteId;
+}
+
+function collectDraft() {
+  const draft = Object.fromEntries(new FormData(form).entries());
+  delete draft.workDate;
+  for (const checkbox of form.querySelectorAll(
+    'input[type="checkbox"][name]',
+  )) {
+    draft[checkbox.name] = checkbox.checked;
+  }
+  draft.selectedOptions = [...selectedOptions];
+  draft.selectedTools = [...selectedTools];
+  draft.planResponses = { ...planResponses };
+  return draft;
+}
+
+function clearForm() {
+  activeDictation?.stop();
+  const initials = initialsInput.value;
+  form.reset();
+  initialsInput.value = initials;
+  selectedOptions.clear();
+  selectedTools.clear();
+  for (const key of Object.keys(planResponses)) delete planResponses[key];
+  form.elements.workDate.value = todayLabel();
+  form.elements.esd.value = todayLabel();
+  updateServiceTypeOptions();
+}
+
+function applyDraft(values = {}) {
+  // Device decides which service types exist, so it must be set first.
+  if (values.device !== undefined) form.elements.device.value = values.device;
+  updateServiceTypeOptions();
+  for (const [name, value] of Object.entries(values)) {
+    if (
+      [
+        "selectedOptions",
+        "selectedTools",
+        "planResponses",
+        "workDate",
+        "checkInInitials",
+      ].includes(name)
+    )
+      continue;
+    const control = form.elements.namedItem(name);
+    if (!control) continue;
+    if (control instanceof RadioNodeList) {
+      for (const radio of control)
+        radio.checked = radio.value === String(value);
+    } else if (control.type === "checkbox") control.checked = Boolean(value);
+    else control.value = String(value);
+  }
+  for (const id of values.selectedOptions || []) selectedOptions.add(id);
+  for (const id of values.selectedTools || []) selectedTools.add(id);
+  Object.assign(planResponses, values.planResponses || {});
+}
+
+function loadNote(id) {
+  activeNoteId = id;
+  clearForm();
+  applyDraft(notes[id]);
+  updateServiceTypeOptions();
+  renderServices();
+  renderNoteOptions();
+  saveDraft(true);
+}
+
 function saveDraft(immediate = false) {
   clearTimeout(draftSaveTimer);
 
   const persist = () => {
-    const draft = Object.fromEntries(new FormData(form).entries());
-    delete draft.workDate;
-    for (const checkbox of form.querySelectorAll(
-      'input[type="checkbox"][name]',
-    )) {
-      draft[checkbox.name] = checkbox.checked;
-    }
-    draft.selectedOptions = [...selectedOptions];
-    draft.selectedTools = [...selectedTools];
-    draft.planResponses = { ...planResponses };
+    if (!activeNoteId) return;
+    notes[activeNoteId] = collectDraft();
+    renderNoteOptions();
 
     chrome.storage.local
       .set({
-        [DRAFT_KEY]: draft,
+        [NOTES_KEY]: { activeId: activeNoteId, order: noteOrder, notes },
         [INITIALS_KEY]: initialsInput.value,
       })
-      .catch((error) =>
-        console.error("Could not save work-order draft.", error),
-      );
+      .catch((error) => console.error("Could not save notes.", error));
   };
 
   if (immediate) persist();
@@ -563,39 +693,38 @@ async function initialize() {
     );
   }
 
-  const stored = await chrome.storage.local.get([DRAFT_KEY, INITIALS_KEY]);
-  const values = stored[DRAFT_KEY];
-  if (values) {
-    for (const [name, value] of Object.entries(values)) {
-      if (
-        [
-          "selectedOptions",
-          "selectedTools",
-          "planResponses",
-          "workDate",
-        ].includes(name)
-      )
-        continue;
-      const control = form.elements.namedItem(name);
-      if (!control) continue;
-      if (control instanceof RadioNodeList) {
-        for (const radio of control)
-          radio.checked = radio.value === String(value);
-      } else if (control.type === "checkbox") control.checked = Boolean(value);
-      else control.value = String(value);
-    }
-    for (const id of values.selectedOptions || []) selectedOptions.add(id);
-    for (const id of values.selectedTools || []) selectedTools.add(id);
-    Object.assign(planResponses, values.planResponses || {});
+  const stored = await chrome.storage.local.get([
+    NOTES_KEY,
+    DRAFT_KEY,
+    INITIALS_KEY,
+  ]);
+  const savedNotes = stored[NOTES_KEY];
+  for (const id of savedNotes?.order || []) {
+    if (!savedNotes.notes?.[id]) continue;
+    notes[id] = savedNotes.notes[id];
+    noteOrder.push(id);
   }
+  const migratedLegacyDraft = !noteOrder.length;
+  if (migratedLegacyDraft) {
+    const id = crypto.randomUUID();
+    notes[id] = stored[DRAFT_KEY] || {};
+    noteOrder.push(id);
+  }
+  activeNoteId = notes[savedNotes?.activeId]
+    ? savedNotes.activeId
+    : noteOrder[0];
   if (typeof stored[INITIALS_KEY] === "string")
     initialsInput.value = stored[INITIALS_KEY];
+  applyDraft(notes[activeNoteId]);
 
   if (!form.elements.workDate.value)
     form.elements.workDate.value = todayLabel();
   if (!form.elements.esd.value) form.elements.esd.value = todayLabel();
   updateServiceTypeOptions();
   renderServices();
+  renderNoteOptions();
+  saveDraft(true);
+  if (migratedLegacyDraft) chrome.storage.local.remove(DRAFT_KEY);
   const theme = await chrome.storage.local.get(THEME_KEY);
   applyTheme(theme[THEME_KEY] || DEFAULT_THEME);
 }
@@ -618,21 +747,43 @@ initialsInput.addEventListener("blur", () => saveDraft(true));
 form.addEventListener("focusout", () => saveDraft(true));
 window.addEventListener("pagehide", () => saveDraft(true));
 
-document.querySelector("#reset-button").addEventListener("click", async () => {
-  if (!window.confirm("Clear saved work-order data and start fresh?")) return;
-  clearTimeout(draftSaveTimer);
-  const initials = initialsInput.value;
-  await chrome.storage.local.remove(DRAFT_KEY);
-  form.reset();
-  initialsInput.value = initials;
-  selectedOptions.clear();
-  selectedTools.clear();
-  for (const key of Object.keys(planResponses)) delete planResponses[key];
-  form.elements.workDate.value = todayLabel();
-  form.elements.esd.value = todayLabel();
-  updateServiceTypeOptions();
-  renderServices();
-  showStatus("Saved data cleared.", "success");
+document.querySelector("#reset-button").addEventListener("click", () => {
+  if (
+    !window.confirm("Clear this note and start it fresh? Other notes are kept.")
+  )
+    return;
+  notes[activeNoteId] = {};
+  loadNote(activeNoteId);
+  showStatus("Note cleared.", "success");
+});
+
+notesSelect.addEventListener("change", () => {
+  const targetId = notesSelect.value;
+  saveDraft(true);
+  loadNote(targetId);
+});
+
+document.querySelector("#new-note-button").addEventListener("click", () => {
+  saveDraft(true);
+  const id = crypto.randomUUID();
+  notes[id] = {};
+  noteOrder.push(id);
+  loadNote(id);
+  showStatus("New note started. Your other notes are saved.", "success");
+});
+
+document.querySelector("#delete-note-button").addEventListener("click", () => {
+  if (!window.confirm("Delete this note? This cannot be undone.")) return;
+  const index = noteOrder.indexOf(activeNoteId);
+  delete notes[activeNoteId];
+  noteOrder.splice(index, 1);
+  if (!noteOrder.length) {
+    const id = crypto.randomUUID();
+    notes[id] = {};
+    noteOrder.push(id);
+  }
+  loadNote(noteOrder[Math.min(index, noteOrder.length - 1)]);
+  showStatus("Note deleted.", "success");
 });
 
 document.querySelectorAll(".tab").forEach((tab) => {
