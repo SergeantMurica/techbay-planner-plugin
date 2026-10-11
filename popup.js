@@ -149,6 +149,21 @@ function addChoiceChip(container, item, set, onRemove) {
 const LISTENING_MESSAGE = 'Listening... say "pause" or "end".';
 const PAUSED_MESSAGE = 'Paused. Say "unpause" to continue.';
 
+// Common mis-hearings of shop jargon; extend as new ones show up.
+const VOICE_CORRECTIONS = [
+  [
+    /\b(women'?s|woman'?s|win\s?(?:age|edge)|why\s?image|wimmage)\b/gi,
+    "wimage",
+  ],
+];
+
+function applyVoiceCorrections(text) {
+  return VOICE_CORRECTIONS.reduce(
+    (result, [pattern, replacement]) => result.replace(pattern, replacement),
+    text,
+  );
+}
+
 // Only a whole utterance counts, so "front end" in a note is never a command.
 function parseVoiceCommand(transcript) {
   const spoken = transcript
@@ -240,18 +255,28 @@ function addDictationControl(container, textarea) {
       recognition.continuous = true;
       recognition.interimResults = true;
       recognition.lang = "en-US";
+      recognition.maxAlternatives = 5;
 
       recognition.onresult = (event) => {
         let interim = "";
         for (const result of Array.from(event.results).slice(
           event.resultIndex,
         )) {
-          const text = result[0].transcript.trim();
+          let text = result[0].transcript.trim();
           if (!text) continue;
           if (!result.isFinal) {
-            interim = text;
+            interim = applyVoiceCorrections(text);
             continue;
           }
+
+          // Prefer an alternative containing a known term over the top guess.
+          const alternatives = Array.from(
+            { length: Math.min(result.length, 5) },
+            (_, i) => result[i].transcript.trim(),
+          ).filter(Boolean);
+          text = applyVoiceCorrections(
+            alternatives.find((alt) => /wimage/i.test(alt)) ?? text,
+          );
 
           pendingTranscript = "";
           const command = parseVoiceCommand(text);
