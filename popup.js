@@ -696,7 +696,7 @@ async function sendFillMessage(tabId, values) {
   return responses[0];
 }
 
-async function initialize() {
+async function refreshActiveTab() {
   const [tab] = await chrome.tabs.query({
     active: true,
     lastFocusedWindow: true,
@@ -705,6 +705,7 @@ async function initialize() {
   const detectedOrder = getOrderNumber(tab?.url);
   activeOrderNumber = detectedOrder;
   orderNumber.textContent = detectedOrder || "No order detected";
+  connection.classList.remove("ready", "error");
 
   if (detectedOrder && /admin\.shopify\.com/i.test(tab?.url ?? "")) {
     connection.classList.add("ready");
@@ -717,6 +718,17 @@ async function initialize() {
       "Shopify Work Mate order not detected",
     );
   }
+}
+
+// The side panel stays open, so follow the active tab and its URL changes.
+chrome.tabs.onActivated.addListener(() => refreshActiveTab());
+chrome.tabs.onUpdated.addListener((id, info) => {
+  if (id === activeTabId && info.url) refreshActiveTab();
+});
+chrome.windows.onFocusChanged.addListener(() => refreshActiveTab());
+
+async function initialize() {
+  await refreshActiveTab();
 
   const stored = await chrome.storage.local.get([
     NOTES_KEY,

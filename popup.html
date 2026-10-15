@@ -19,8 +19,19 @@
           id="connection"
           aria-label="Checking active tab"
         >
-          <span class="connection-dot"></span>
-        </span>
+          <span class="connection-dot"></span> </span
+        ><label class="theme-control">
+          <span class="sr-only">Color theme</span>
+          <select id="theme-select" aria-label="Color theme">
+            <option value="meta">Meta</option>
+            <option value="nightreaper">Nightreaper</option>
+            <option value="hyperbeast">Hyperbeast</option>
+            <option value="phoenix">Phoenix</option>
+            <option value="gray">Gray</option>
+            <option value="black">Black</option>
+            <option value="white">White</option>
+          </select>
+        </label>
         <button class="reset-button" id="reset-button" type="button">
           Reset
         </button>
@@ -40,18 +51,6 @@
             maxlength="4"
             aria-label="Technician initials"
           />
-        </label>
-        <label class="theme-control">
-          <span class="sr-only">Color theme</span>
-          <select id="theme-select" aria-label="Color theme">
-            <option value="meta">Meta</option>
-            <option value="nightreaper">Nightreaper</option>
-            <option value="hyperbeast">Hyperbeast</option>
-            <option value="phoenix">Phoenix</option>
-            <option value="gray">Gray</option>
-            <option value="black">Black</option>
-            <option value="white">White</option>
-          </select>
         </label>
       </div>
 

@@ -3,19 +3,39 @@
   "name": "Techbay Work Order Assistant",
   "version": "1.0.0",
   "description": "Manage check-in, service plans, technician notes, callback notes in Shopify Admin.",
-  "permissions": ["activeTab", "scripting", "storage", "clipboardWrite"],
-  "host_permissions": ["https://admin.shopify.com/*"],
-  "optional_host_permissions": ["https://app.workmatepos.co/*"],
+  "permissions": [
+    "activeTab",
+    "scripting",
+    "storage",
+    "clipboardWrite",
+    "sidePanel",
+    "tabs"
+  ],
+  "host_permissions": [
+    "https://admin.shopify.com/*"
+  ],
+  "optional_host_permissions": [
+    "https://app.workmatepos.co/*"
+  ],
   "action": {
-    "default_title": "Techbay Work Order Assistant",
-    "default_popup": "popup.html"
+    "default_title": "Techbay Work Order Assistant"
   },
   "content_scripts": [
     {
-      "matches": ["https://admin.shopify.com/*"],
-      "js": ["content.js"],
+      "matches": [
+        "https://admin.shopify.com/*"
+      ],
+      "js": [
+        "content.js"
+      ],
       "run_at": "document_idle",
       "all_frames": true
     }
-  ]
+  ],
+  "side_panel": {
+    "default_path": "popup.html"
+  },
+  "background": {
+    "service_worker": "background.js"
+  }
 }

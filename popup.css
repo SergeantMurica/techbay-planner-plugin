@@ -20,14 +20,11 @@
 }
 
 html {
-  width: 640px;
+  min-width: 320px;
 }
 
 body {
-  width: 640px;
-  min-height: 520px;
-  max-height: 600px;
-  overflow-y: auto;
+  min-height: 100vh;
   margin: 0;
   background:
     radial-gradient(
