@@ -69,6 +69,11 @@ textarea {
   font-size: 25px;
   font-weight: 800;
 }
+.brand-logo {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
 .brand-copy {
   flex: 1;
 }

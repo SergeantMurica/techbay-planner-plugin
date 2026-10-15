@@ -1,6 +1,6 @@
 {
   "manifest_version": 3,
-  "name": "Techbay Work Order Assistant",
+  "name": "Work Mate Assistant",
   "version": "1.0.0",
   "description": "Manage check-in, service plans, technician notes, callback notes in Shopify Admin.",
   "permissions": [
@@ -11,29 +11,26 @@
     "sidePanel",
     "tabs"
   ],
-  "host_permissions": [
-    "https://admin.shopify.com/*"
-  ],
-  "optional_host_permissions": [
-    "https://app.workmatepos.co/*"
-  ],
+  "host_permissions": ["https://admin.shopify.com/*"],
+  "optional_host_permissions": ["https://app.workmatepos.co/*"],
   "action": {
-    "default_title": "Techbay Work Order Assistant"
+    "default_title": "Work Mate Assistant"
   },
   "content_scripts": [
     {
-      "matches": [
-        "https://admin.shopify.com/*"
-      ],
-      "js": [
-        "content.js"
-      ],
+      "matches": ["https://admin.shopify.com/*"],
+      "js": ["content.js"],
       "run_at": "document_idle",
       "all_frames": true
     }
   ],
   "side_panel": {
     "default_path": "popup.html"
+  },
+  "icons": {
+    "16": "icons/icon16.png",
+    "48": "icons/icon48.png",
+    "128": "icons/icon128.png"
   },
   "background": {
     "service_worker": "background.js"
