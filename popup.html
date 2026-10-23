@@ -60,6 +60,27 @@
         </label>
       </div>
 
+      <section id="order-list" aria-label="Pulled work orders">
+        <div class="section-heading">
+          <h2>Work order list</h2>
+          <button class="notes-button" id="pull-orders" type="button">Pull visible list / order</button>
+        </div>
+        <label class="field">
+          <span>Search pulled orders</span>
+          <input id="order-search" type="search" placeholder="Order, customer, status, Daily update..." />
+        </label>
+        <p id="list-summary"></p>
+        <button class="notes-button" id="fill-daily-updates" type="button">Fill Daily update drafts in this list</button>
+        <div id="order-rows"></div>
+      </section>
+
+      <div class="list-actions">
+        <button class="notes-button" id="show-list" type="button">Show pulled list</button>
+        <button class="notes-button" id="show-active-order" type="button">Follow active tab</button>
+      </div>
+
+      <div id="order-workspace" hidden>
+      <button class="notes-button" id="load-order-fields" type="button">Pull current order fields into this note</button>
       <div class="notes-bar">
         <label class="notes-select">
           <span class="sr-only">Saved notes</span>
@@ -278,12 +299,16 @@
           <span aria-hidden="true">↗</span>
         </button>
       </form>
+      </div>
 
       <div class="status" id="status" role="status" aria-live="polite">
-        Open a Shopify Work Mate order to begin.
+        Open a Work Mate list and click Pull to read the current page.
       </div>
       <footer>
-        Fields are filled in place. Review changes and submit in Shopify.
+        Work Mate Assistant 1.1 / Pull-only lists.
+        Pulled orders and list drafts are temporary, not stored locally.
+        Check-in/service notes and settings remain saved separately.
+        Injection never clicks Save. Review and submit in Shopify. Products are excluded.
       </footer>
     </main>
     <script type="module" src="popup.js"></script>
